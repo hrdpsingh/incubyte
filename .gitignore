@@ -1,11 +1,9 @@
 # Backend
-__pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
-.venv
+backend/__pycache__
+backend/.venv/
+backend/.pytest_cache/
+backend/.ruff_cache/
+backend/tests/__pycache__
 
 # Common
 diff.txt
