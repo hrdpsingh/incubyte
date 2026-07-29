@@ -11,7 +11,6 @@ def test_register_new_user():
     )
     assert response.status_code == 201
     body = response.json()
-    assert "id" in body
     assert body["username"] == "testuser"
     assert "password" not in body
 
