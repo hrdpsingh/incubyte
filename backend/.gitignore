@@ -1,0 +1,17 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+routes/__pycache__/
+tests/__pycache__/
+
+# Virtual environments
+.venv
+
+# Miscellaneous
+dealership.db
+.pytest_cache/
+.ruff_cache/

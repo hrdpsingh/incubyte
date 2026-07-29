@@ -1,13 +1,2 @@
-# Backend
-backend/__pycache__/
-backend/.venv/
-backend/.pytest_cache/
-backend/.ruff_cache/
-backend/dealership.db
-backend/routes/__pycache__/
-backend/tests/__pycache__/
-backend/tests/test_dealership.db
-
-# Common
 INSTRUCTIONS.md
 diff.txt
