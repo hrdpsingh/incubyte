@@ -9,4 +9,5 @@ backend/tests/__pycache__/
 backend/tests/test_dealership.db
 
 # Common
+INSTRUCTIONS.md
 diff.txt
