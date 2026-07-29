@@ -1,20 +1,29 @@
 import { useState } from "react";
 
+type Screen = "login" | "register";
+
 interface LoginProps {
     setToken: (token: string) => void;
+    navigate: (screen: Screen) => void;
 }
 
 const API = import.meta.env.VITE_API_URL;
 
 export default function Login({
     setToken,
+    navigate,
 }: LoginProps) {
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
+    const [username, setUsername] =
+        useState("");
 
-    async function handleLogin(
-        e: React.FormEvent,
+    const [password, setPassword] =
+        useState("");
+
+    const [error, setError] =
+        useState("");
+
+    async function handleSubmit(
+        e: React.FormEvent
     ) {
         e.preventDefault();
 
@@ -33,7 +42,7 @@ export default function Login({
                         username,
                         password,
                     }),
-                },
+                }
             );
 
             if (!response.ok) {
@@ -45,15 +54,17 @@ export default function Login({
 
             setToken(data.access_token);
         } catch {
-            setError("Unable to reach the server.");
+            setError(
+                "Unable to contact server."
+            );
         }
     }
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-100">
             <form
-                onSubmit={handleLogin}
-                className="w-96 rounded-xl bg-white p-8 shadow-lg space-y-4"
+                onSubmit={handleSubmit}
+                className="w-96 space-y-4 rounded-xl bg-white p-8 shadow-lg"
             >
                 <h1 className="text-center text-2xl font-bold">
                     Dealership Login
@@ -68,21 +79,21 @@ export default function Login({
                 <input
                     type="text"
                     placeholder="Username"
-                    className="w-full rounded border p-2"
                     value={username}
                     onChange={(e) =>
                         setUsername(e.target.value)
                     }
+                    className="w-full rounded border p-2"
                 />
 
                 <input
                     type="password"
                     placeholder="Password"
-                    className="w-full rounded border p-2"
                     value={password}
                     onChange={(e) =>
                         setPassword(e.target.value)
                     }
+                    className="w-full rounded border p-2"
                 />
 
                 <button
@@ -91,6 +102,19 @@ export default function Login({
                 >
                     Login
                 </button>
+
+                <p className="text-center text-sm">
+                    Don't have an account?{" "}
+                    <button
+                        type="button"
+                        onClick={() =>
+                            navigate("register")
+                        }
+                        className="text-blue-600 underline"
+                    >
+                        Register
+                    </button>
+                </p>
             </form>
         </div>
     );

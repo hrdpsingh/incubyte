@@ -1,11 +1,22 @@
 import uvicorn
 from database import Base, engine
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from route import router
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Car Dealership Inventory System")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(router)
 

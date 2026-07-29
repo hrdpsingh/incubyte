@@ -1,19 +1,27 @@
 import { useState } from "react";
 
+type Screen = "login" | "register";
+
 interface RegisterProps {
-    onRegistered: () => void;
+    navigate: (screen: Screen) => void;
 }
 
 const API = import.meta.env.VITE_API_URL;
 
 export default function Register({
-    onRegistered,
+    navigate,
 }: RegisterProps) {
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
+    const [username, setUsername] =
+        useState("");
 
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
+    const [password, setPassword] =
+        useState("");
+
+    const [error, setError] =
+        useState("");
+
+    const [success, setSuccess] =
+        useState("");
 
     async function handleSubmit(
         e: React.FormEvent
@@ -40,24 +48,22 @@ export default function Register({
             );
 
             if (!response.ok) {
-                const data = await response.json();
+                const data =
+                    await response.json();
 
                 setError(
                     data.detail ??
-                    "Unable to register."
+                    "Registration failed."
                 );
 
                 return;
             }
 
-            setSuccess(
-                "Registration successful!"
-            );
-
-            onRegistered();
+            setSuccess("Registration successful!");
+            navigate("login");
         } catch {
             setError(
-                "Unable to contact the server."
+                "Unable to contact server."
             );
         }
     }
@@ -69,7 +75,7 @@ export default function Register({
                 className="w-96 space-y-4 rounded-xl bg-white p-8 shadow-lg"
             >
                 <h1 className="text-center text-2xl font-bold">
-                    Register
+                    Create Account
                 </h1>
 
                 {error && (
@@ -110,6 +116,19 @@ export default function Register({
                 >
                     Register
                 </button>
+
+                <p className="text-center text-sm">
+                    Already have an account?{" "}
+                    <button
+                        type="button"
+                        onClick={() =>
+                            navigate("login")
+                        }
+                        className="text-blue-600 underline"
+                    >
+                        Login
+                    </button>
+                </p>
             </form>
         </div>
     );

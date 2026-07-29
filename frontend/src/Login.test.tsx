@@ -1,12 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, test, expect } from "vitest";
+
 import Login from "./Login";
 
 test("logs in successfully", async () => {
     const user = userEvent.setup();
-
-    const mockSetToken = vi.fn();
 
     vi.stubGlobal(
         "fetch",
@@ -15,29 +14,45 @@ test("logs in successfully", async () => {
                 ok: true,
                 json: () =>
                     Promise.resolve({
-                        access_token: "fake-token",
+                        access_token: "token123",
                     }),
-            }),
+            })
+        )
+    );
+
+    const setToken = vi.fn();
+    const navigate = vi.fn();
+
+    render(
+        <Login
+            setToken={setToken}
+            navigate={navigate}
+        />
+    );
+
+    await user.type(
+        screen.getByPlaceholderText(
+            "Username"
         ),
-    );
-
-    render(<Login setToken={mockSetToken} />);
-
-    await user.type(
-        screen.getByPlaceholderText("Username"),
-        "admin",
+        "admin"
     );
 
     await user.type(
-        screen.getByPlaceholderText("Password"),
-        "password",
+        screen.getByPlaceholderText(
+            "Password"
+        ),
+        "password"
     );
 
     await user.click(
-        screen.getByRole("button", { name: /login/i }),
+        screen.getByRole("button", {
+            name: /login/i,
+        })
     );
 
     expect(fetch).toHaveBeenCalled();
 
-    expect(mockSetToken).toHaveBeenCalledWith("fake-token");
+    expect(setToken).toHaveBeenCalledWith(
+        "token123"
+    );
 });
