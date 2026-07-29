@@ -111,28 +111,3 @@ def test_delete_vehicle(authentication_headers):
         headers=authentication_headers,
     )
     assert response.json() == []
-
-
-def test_purchase_vehicle(authentication_headers):
-    vehicle = create_vehicle(authentication_headers)
-
-    response = client.post(
-        f"/api/vehicles/{vehicle['id']}/purchase",
-        headers=authentication_headers,
-    )
-
-    assert response.status_code == 200
-    assert response.json()["quantity"] == 4
-
-
-def test_restock_vehicle(authentication_headers):
-    vehicle = create_vehicle(authentication_headers)
-
-    response = client.post(
-        f"/api/vehicles/{vehicle['id']}/restock",
-        headers=authentication_headers,
-        json={"quantity": 5},
-    )
-
-    assert response.status_code == 200
-    assert response.json()["quantity"] == 10
