@@ -9,3 +9,6 @@
 - How do I protect the vehicle endpoints using an authentication token?
 - Provide pydantic models for the vehicle endpoints.
 - How do I implement admin-only access for the restock endpoint?
+- Do I need a separate endpoint to promote an user to admin?
+- How do I reduce duplication in my tests?
+- What dependencies do I need for Tailwind?
