@@ -14,7 +14,6 @@ from model import (
     RegisterRequest,
     RestockRequest,
     User,
-    UserResponse,
     Vehicle,
     VehicleCreate,
     VehicleResponse,
@@ -128,25 +127,6 @@ def login(payload: LoginRequest, database: DatabaseSession):
         "token_type": "bearer",
         "expires_in_seconds": TOKEN_EXPIRE_MINUTES * 60,
     }
-
-
-@router.post(
-    "/api/users/{username}/promote",
-    response_model=UserResponse,
-    tags=["users"],
-    dependencies=[Depends(get_admin_user)],
-)
-def promote_user(username: str, database: DatabaseSession):
-    user = database.query(User).filter(User.username == username).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-
-    user.is_admin = True
-    database.commit()
-    database.refresh(user)
-    return user
 
 
 @router.post(

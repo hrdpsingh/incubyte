@@ -104,48 +104,6 @@ class TestUserLogin:
         assert response.status_code == 401
 
 
-class TestUserPromotion:
-    def test_promote_user_success(self, admin_authentication_headers):
-        target_username = f"target_{uuid.uuid4().hex}"
-        client.post(
-            "/api/auth/register",
-            json={"username": target_username, "password": "password123"},
-        )
-
-        response = client.post(
-            f"/api/users/{target_username}/promote",
-            headers=admin_authentication_headers,
-        )
-        assert response.status_code == 200
-        body = response.json()
-        assert body["username"] == target_username
-        assert body["is_admin"] is True
-
-    def test_promote_user_non_admin_forbidden(self, authentication_headers):
-        target_username = f"target_{uuid.uuid4().hex}"
-        client.post(
-            "/api/auth/register",
-            json={"username": target_username, "password": "password123"},
-        )
-
-        response = client.post(
-            f"/api/users/{target_username}/promote",
-            headers=authentication_headers,
-        )
-        assert response.status_code == 403
-
-    def test_promote_user_unauthorized(self):
-        response = client.post("/api/users/someuser/promote")
-        assert response.status_code in (401, 403)
-
-    def test_promote_nonexistent_user(self, admin_authentication_headers):
-        response = client.post(
-            "/api/users/ghost_user_99999/promote",
-            headers=admin_authentication_headers,
-        )
-        assert response.status_code == 404
-
-
 class TestVehicleManagement:
     def test_create_vehicle(self, authentication_headers):
         vehicle = create_vehicle(authentication_headers)
