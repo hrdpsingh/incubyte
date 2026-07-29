@@ -1,14 +1,11 @@
-import os
 from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./dealership.db")
-
 engine = create_engine(
-    DATABASE_URL,
+    "sqlite:///./dealership.db",
     connect_args={"check_same_thread": False},
 )
 

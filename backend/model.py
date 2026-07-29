@@ -22,6 +22,13 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class UserResponse(BaseModel):
+    username: str
+    is_admin: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class Vehicle(Base):
     __tablename__ = "vehicles"
 
@@ -61,4 +68,4 @@ class VehicleResponse(BaseModel):
 
 
 class RestockRequest(BaseModel):
-    quantity: int = Field(gt=0, description="Quantity to add to inventory")
+    quantity: int = Field(gt=0)

@@ -1,17 +1,13 @@
 import uvicorn
 from database import Base, engine
 from fastapi import FastAPI
-from routes.authentication import router as authentication_router
-from routes.inventory import router as inventory_router
-from routes.vehicle import router as vehicle_router
+from route import router
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Car Dealership Inventory System")
 
-app.include_router(authentication_router)
-app.include_router(vehicle_router)
-app.include_router(inventory_router)
+app.include_router(router)
 
 
 @app.get("/")
