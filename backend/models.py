@@ -1,8 +1,6 @@
-from datetime import datetime
-
 from database import Base
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import Boolean, DateTime, Float, Integer
+from sqlalchemy import Boolean, Float, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
 
@@ -11,10 +9,6 @@ class User(Base):
 
     username: Mapped[str] = mapped_column(primary_key=True, unique=True, index=True)
     password_hash: Mapped[str]
-    token_hash: Mapped[str | None] = mapped_column(nullable=True)
-    token_expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
 
 

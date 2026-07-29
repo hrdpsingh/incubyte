@@ -1,18 +1,38 @@
-import hashlib
-import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 import bcrypt
+import jwt
 from database import DatabaseSession
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jwt.exceptions import InvalidTokenError
 from models import LoginRequest, RegisterRequest, User
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 security = HTTPBearer()
 
+SECRET_KEY = "your-fallback-secret-key-change-this-in-production"
+ALGORITHM = "HS256"
 TOKEN_EXPIRE_MINUTES = 30
+
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + (
+        expires_delta or timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+    )
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+
+def verify_password(password: str, password_hash: str) -> bool:
+    return bcrypt.checkpw(password.encode(), password_hash.encode())
 
 
 @router.post("/register", status_code=201)
@@ -39,28 +59,13 @@ def login(payload: LoginRequest, database: DatabaseSession):
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = secrets.token_hex(32)
-
-    user.token_hash = hashlib.sha256(token.encode()).hexdigest()
-    user.token_expires_at = datetime.now(timezone.utc) + timedelta(
-        minutes=TOKEN_EXPIRE_MINUTES
-    )
-
-    database.commit()
+    access_token = create_access_token(data={"sub": user.username})
 
     return {
-        "access_token": token,
+        "access_token": access_token,
         "token_type": "bearer",
         "expires_in_seconds": TOKEN_EXPIRE_MINUTES * 60,
     }
-
-
-def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-
-
-def verify_password(password: str, password_hash: str) -> bool:
-    return bcrypt.checkpw(password.encode(), password_hash.encode())
 
 
 BearerCredentials = Annotated[
@@ -72,29 +77,26 @@ BearerCredentials = Annotated[
 def get_current_user(
     credentials: BearerCredentials,
     database: DatabaseSession,
-):
-    token_hash = hashlib.sha256(credentials.credentials.encode()).hexdigest()
-
-    user = database.query(User).filter(User.token_hash == token_hash).first()
-
-    if user is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid authentication token",
-        )
-
-    now = datetime.now(timezone.utc)
-    user_expiry = (
-        user.token_expires_at.replace(tzinfo=timezone.utc)
-        if user.token_expires_at and user.token_expires_at.tzinfo is None
-        else user.token_expires_at
+) -> User:
+    token = credentials.credentials
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
     )
 
-    if user_expiry is None or now > user_expiry:
-        raise HTTPException(
-            status_code=401,
-            detail="Token has expired. Please login again.",
-        )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str | None = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except InvalidTokenError:
+        raise credentials_exception
+
+    # Retrieve user from DB to ensure they still exist
+    user = database.query(User).filter(User.username == username).first()
+    if user is None:
+        raise credentials_exception
 
     return user
 
