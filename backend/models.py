@@ -1,5 +1,6 @@
 from database import Base
 from pydantic import BaseModel
+from sqlalchemy import Float, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
 
@@ -18,3 +19,14 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     username: str
     password: str
+
+
+class Vehicle(Base):
+    __tablename__ = "vehicles"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    make: Mapped[str]
+    model: Mapped[str]
+    category: Mapped[str]
+    price: Mapped[float] = mapped_column(Float)
+    quantity: Mapped[int] = mapped_column(Integer)
