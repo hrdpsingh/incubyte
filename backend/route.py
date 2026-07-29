@@ -234,7 +234,7 @@ def delete_vehicle(vehicle: VehicleDep, database: DatabaseSession):
 
 
 @router.post(
-    "/api/inventory/{vehicle_id}/purchase",
+    "/api/vehicles/{vehicle_id}/purchase",
     response_model=VehicleResponse,
     tags=["inventory"],
     dependencies=[Depends(get_current_user)],
@@ -253,7 +253,7 @@ def purchase_vehicle(vehicle: VehicleDep, database: DatabaseSession):
 
 
 @router.post(
-    "/api/inventory/{vehicle_id}/restock",
+    "/api/vehicles/{vehicle_id}/restock",
     response_model=VehicleResponse,
     tags=["inventory"],
     dependencies=[Depends(get_admin_user)],

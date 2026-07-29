@@ -202,7 +202,7 @@ class TestInventoryPurchases:
         vehicle = create_vehicle(authentication_headers, quantity=5)
 
         response = client.post(
-            f"/api/inventory/{vehicle['id']}/purchase",
+            f"/api/vehicles/{vehicle['id']}/purchase",
             headers=authentication_headers,
         )
         assert response.status_code == 200
@@ -212,7 +212,7 @@ class TestInventoryPurchases:
         vehicle = create_vehicle(authentication_headers, quantity=0)
 
         response = client.post(
-            f"/api/inventory/{vehicle['id']}/purchase",
+            f"/api/vehicles/{vehicle['id']}/purchase",
             headers=authentication_headers,
         )
         assert response.status_code == 400
@@ -220,13 +220,13 @@ class TestInventoryPurchases:
 
     def test_purchase_vehicle_not_found(self, authentication_headers):
         response = client.post(
-            "/api/inventory/999999/purchase",
+            "/api/vehicles/999999/purchase",
             headers=authentication_headers,
         )
         assert response.status_code == 404
 
     def test_purchase_vehicle_unauthorized(self):
-        response = client.post("/api/inventory/1/purchase")
+        response = client.post("/api/vehicles/1/purchase")
         assert response.status_code in (401, 403)
 
 
@@ -235,7 +235,7 @@ class TestInventoryRestocking:
         vehicle = create_vehicle(admin_authentication_headers, quantity=5)
 
         response = client.post(
-            f"/api/inventory/{vehicle['id']}/restock",
+            f"/api/vehicles/{vehicle['id']}/restock",
             headers=admin_authentication_headers,
             json={"quantity": 10},
         )
@@ -244,12 +244,12 @@ class TestInventoryRestocking:
 
     def test_restock_vehicle_not_found(self, admin_authentication_headers):
         response = client.post(
-            "/api/inventory/999999/restock",
+            "/api/vehicles/999999/restock",
             headers=admin_authentication_headers,
             json={"quantity": 10},
         )
         assert response.status_code == 404
 
     def test_restock_vehicle_unauthorized(self):
-        response = client.post("/api/inventory/1/restock", json={"quantity": 10})
+        response = client.post("/api/vehicles/1/restock", json={"quantity": 10})
         assert response.status_code in (401, 403)
