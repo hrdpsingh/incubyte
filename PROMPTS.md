@@ -7,3 +7,5 @@
 - What tests should I write for the vehicle endpoints?
 - How do I implement salted hashing for passwords?
 - How do I protect the vehicle endpoints using an authentication token?
+- Provide pydantic models for the vehicle endpoints.
+- How do I implement admin-only access for the restock endpoint?

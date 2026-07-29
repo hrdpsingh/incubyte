@@ -1,6 +1,6 @@
 from database import DatabaseSession
 from fastapi import APIRouter, Depends, HTTPException, Response, status
-from models import Vehicle
+from models import Vehicle, VehicleCreate, VehicleResponse, VehicleUpdate
 from routes.authentication import get_current_user
 
 router = APIRouter(
@@ -10,21 +10,21 @@ router = APIRouter(
 )
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
-def create_vehicle(vehicle: dict, database: DatabaseSession):
-    database_vehicle = Vehicle(**vehicle)
+@router.post("", response_model=VehicleResponse, status_code=status.HTTP_201_CREATED)
+def create_vehicle(vehicle: VehicleCreate, database: DatabaseSession):
+    database_vehicle = Vehicle(**vehicle.model_dump())
     database.add(database_vehicle)
     database.commit()
     database.refresh(database_vehicle)
     return database_vehicle
 
 
-@router.get("")
+@router.get("", response_model=list[VehicleResponse])
 def list_vehicles(database: DatabaseSession):
     return database.query(Vehicle).all()
 
 
-@router.get("/search")
+@router.get("/search", response_model=list[VehicleResponse])
 def search_vehicles(
     database: DatabaseSession,
     make: str | None = None,
@@ -37,14 +37,17 @@ def search_vehicles(
     return query.all()
 
 
-@router.put("/{vehicle_id}")
-def update_vehicle(vehicle_id: int, vehicle: dict, database: DatabaseSession):
+@router.put("/{vehicle_id}", response_model=VehicleResponse)
+def update_vehicle(vehicle_id: int, vehicle: VehicleUpdate, database: DatabaseSession):
     database_vehicle = database.get(Vehicle, vehicle_id)
 
     if database_vehicle is None:
-        raise HTTPException(status_code=404)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found"
+        )
 
-    for key, value in vehicle.items():
+    update_data = vehicle.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
         setattr(database_vehicle, key, value)
 
     database.commit()
@@ -58,7 +61,9 @@ def delete_vehicle(vehicle_id: int, database: DatabaseSession):
     database_vehicle = database.get(Vehicle, vehicle_id)
 
     if database_vehicle is None:
-        raise HTTPException(status_code=404)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found"
+        )
 
     database.delete(database_vehicle)
     database.commit()

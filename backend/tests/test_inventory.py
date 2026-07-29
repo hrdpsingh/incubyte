@@ -70,8 +70,8 @@ def test_purchase_vehicle_when_quantity_is_zero(authentication_headers):
         headers=authentication_headers,
     )
 
-    assert response.status_code == 200
-    assert response.json()["quantity"] == 0
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Vehicle is out of stock"
 
 
 def test_purchase_vehicle_not_found(authentication_headers):
