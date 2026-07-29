@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface Vehicle {
     id: number;
@@ -20,10 +20,9 @@ export default function Dashboard({
     token,
     logout,
 }: DashboardProps) {
-    const [vehicles, setVehicles] =
-        useState<Vehicle[]>([]);
+    const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
-    async function fetchVehicles() {
+    const fetchVehicles = useCallback(async () => {
         const response = await fetch(
             `${API}/api/vehicles`,
             {
@@ -36,11 +35,11 @@ export default function Dashboard({
         if (response.ok) {
             setVehicles(await response.json());
         }
-    }
+    }, [token]);
 
     useEffect(() => {
         fetchVehicles();
-    }, []);
+    }, [fetchVehicles]);
 
     async function purchase(id: number) {
         const response = await fetch(
