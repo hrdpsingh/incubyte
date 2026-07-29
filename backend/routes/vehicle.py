@@ -1,30 +1,35 @@
 from database import DatabaseSession
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from models import Vehicle
+from routes.authentication import get_current_user
 
-router = APIRouter(prefix="/api/vehicles", tags=["vehicles"])
+router = APIRouter(
+    prefix="/api/vehicles",
+    tags=["vehicles"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
-def create_vehicle(vehicle: dict, db: DatabaseSession):
-    db_vehicle = Vehicle(**vehicle)
-    db.add(db_vehicle)
-    db.commit()
-    db.refresh(db_vehicle)
-    return db_vehicle
+def create_vehicle(vehicle: dict, database: DatabaseSession):
+    database_vehicle = Vehicle(**vehicle)
+    database.add(database_vehicle)
+    database.commit()
+    database.refresh(database_vehicle)
+    return database_vehicle
 
 
 @router.get("")
-def list_vehicles(db: DatabaseSession):
-    return db.query(Vehicle).all()
+def list_vehicles(database: DatabaseSession):
+    return database.query(Vehicle).all()
 
 
 @router.get("/search")
 def search_vehicles(
-    db: DatabaseSession,
+    database: DatabaseSession,
     make: str | None = None,
 ):
-    query = db.query(Vehicle)
+    query = database.query(Vehicle)
 
     if make:
         query = query.filter(Vehicle.make == make)
@@ -33,59 +38,60 @@ def search_vehicles(
 
 
 @router.put("/{vehicle_id}")
-def update_vehicle(vehicle_id: int, vehicle: dict, db: DatabaseSession):
-    db_vehicle = db.get(Vehicle, vehicle_id)
+def update_vehicle(vehicle_id: int, vehicle: dict, database: DatabaseSession):
+    database_vehicle = database.get(Vehicle, vehicle_id)
 
-    if db_vehicle is None:
+    if database_vehicle is None:
         raise HTTPException(status_code=404)
 
     for key, value in vehicle.items():
-        setattr(db_vehicle, key, value)
+        setattr(database_vehicle, key, value)
 
-    db.commit()
-    db.refresh(db_vehicle)
+    database.commit()
+    database.refresh(database_vehicle)
 
-    return db_vehicle
+    return database_vehicle
 
 
 @router.delete("/{vehicle_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_vehicle(vehicle_id: int, db: DatabaseSession):
-    db_vehicle = db.get(Vehicle, vehicle_id)
+def delete_vehicle(vehicle_id: int, database: DatabaseSession):
+    database_vehicle = database.get(Vehicle, vehicle_id)
 
-    if db_vehicle is None:
+    if database_vehicle is None:
         raise HTTPException(status_code=404)
 
-    db.delete(db_vehicle)
-    db.commit()
+    database.delete(database_vehicle)
+    database.commit()
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/{vehicle_id}/purchase")
-def purchase_vehicle(vehicle_id: int, db: DatabaseSession):
-    db_vehicle = db.get(Vehicle, vehicle_id)
+def purchase_vehicle(vehicle_id: int, database: DatabaseSession):
+    database_vehicle = database.get(Vehicle, vehicle_id)
 
-    if db_vehicle is None:
+    if database_vehicle is None:
         raise HTTPException(status_code=404)
 
-    db_vehicle.quantity -= 1
+    if database_vehicle.quantity != 0:
+        database_vehicle.quantity -= 1
 
-    db.commit()
-    db.refresh(db_vehicle)
+    database.commit()
+    database.refresh(database_vehicle)
 
-    return db_vehicle
+    return database_vehicle
 
 
 @router.post("/{vehicle_id}/restock")
-def restock_vehicle(vehicle_id: int, body: dict, db: DatabaseSession):
-    db_vehicle = db.get(Vehicle, vehicle_id)
+def restock_vehicle(vehicle_id: int, body: dict, database: DatabaseSession):
+    database_vehicle = database.get(Vehicle, vehicle_id)
 
-    if db_vehicle is None:
+    if database_vehicle is None:
         raise HTTPException(status_code=404)
 
-    db_vehicle.quantity += body["quantity"]
+    database_vehicle.quantity += body["quantity"]
 
-    db.commit()
-    db.refresh(db_vehicle)
+    database.commit()
+    database.refresh(database_vehicle)
 
-    return db_vehicle
+    return database_vehicle

@@ -8,7 +8,8 @@ class User(Base):
     __tablename__ = "users"
 
     username: Mapped[str] = mapped_column(primary_key=True, unique=True, index=True)
-    password_hash: Mapped[str] = mapped_column()
+    password_hash: Mapped[str]
+    token_hash: Mapped[str | None] = mapped_column(nullable=True)
 
 
 class RegisterRequest(BaseModel):
