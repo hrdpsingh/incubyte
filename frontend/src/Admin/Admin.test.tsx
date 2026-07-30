@@ -231,13 +231,18 @@ describe("Admin", () => {
             "Toyota"
         );
 
+        await userEvent.type(
+            screen.getByPlaceholderText(/search model/i),
+            "Camry"
+        );
+
         fireEvent.submit(
             screen.getByRole("button", { name: /search/i }).closest("form")!
         );
 
         await waitFor(() =>
             expect(globalThis.fetch).toHaveBeenLastCalledWith(
-                expect.stringContaining("search?make=Toyota"),
+                expect.stringContaining("search?make=Toyota&model=Camry"),
                 expect.any(Object)
             )
         );

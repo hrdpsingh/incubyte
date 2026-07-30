@@ -32,8 +32,13 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
 
     const [formData, setFormData] = useState<Vehicle>(emptyForm);
     const [editingId, setEditingId] = useState<number | null>(null);
-    const [searchQuery, setSearchQuery] = useState<string>('');
     const [restockAmounts, setRestockAmounts] = useState<{ [key: number]: string }>({});
+
+    const [searchMake, setSearchMake] = useState<string>('');
+    const [searchModel, setSearchModel] = useState<string>('');
+    const [searchCategory, setSearchCategory] = useState<string>('');
+    const [searchMinPrice, setSearchMinPrice] = useState<string>('');
+    const [searchMaxPrice, setSearchMaxPrice] = useState<string>('');
 
     const headers = {
         'Content-Type': 'application/json',
@@ -126,7 +131,15 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
-        await fetchVehicles(`${API}/api/vehicles/search?make=${encodeURIComponent(searchQuery)}`);
+        const params = new URLSearchParams();
+        if (searchMake) params.append("make", searchMake);
+        if (searchModel) params.append("model", searchModel);
+        if (searchCategory) params.append("category", searchCategory);
+        if (searchMinPrice) params.append("min_price", searchMinPrice);
+        if (searchMaxPrice) params.append("max_price", searchMaxPrice);
+
+        const url = params.toString() ? `${API}/api/vehicles/search?${params.toString()}` : `${API}/api/vehicles`;
+        await fetchVehicles(url);
     };
 
     if (loading) return <div className="p-8 text-center text-xl">Loading...</div>;
@@ -154,9 +167,13 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
                 </form>
             </div>
 
-            <div className="mb-6 flex gap-2">
-                <form onSubmit={handleSearch} className="flex gap-2">
-                    <input type="text" placeholder="Search Make" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="rounded border px-3 py-2" />
+            <div className="mb-6">
+                <form onSubmit={handleSearch} className="flex flex-wrap gap-2">
+                    <input type="text" placeholder="Search Make" value={searchMake} onChange={(e) => setSearchMake(e.target.value)} className="rounded border px-3 py-2" />
+                    <input type="text" placeholder="Search Model" value={searchModel} onChange={(e) => setSearchModel(e.target.value)} className="rounded border px-3 py-2" />
+                    <input type="text" placeholder="Search Category" value={searchCategory} onChange={(e) => setSearchCategory(e.target.value)} className="rounded border px-3 py-2" />
+                    <input type="number" placeholder="Min Price" value={searchMinPrice} onChange={(e) => setSearchMinPrice(e.target.value)} className="w-32 rounded border px-3 py-2" />
+                    <input type="number" placeholder="Max Price" value={searchMaxPrice} onChange={(e) => setSearchMaxPrice(e.target.value)} className="w-32 rounded border px-3 py-2" />
                     <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white">Search</button>
                 </form>
             </div>

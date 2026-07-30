@@ -61,19 +61,40 @@ export default function Dashboard({
 }: DashboardProps) {
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [make, setMake] = useState("");
+    const [model, setModel] = useState("");
+    const [category, setCategory] = useState("");
+    const [minPrice, setMinPrice] = useState("");
+    const [maxPrice, setMaxPrice] = useState("");
     const [error, setError] = useState("");
 
     const loadVehicles = useCallback(
-        async (search?: string) => {
+        async (searchParams?: {
+            make?: string;
+            model?: string;
+            category?: string;
+            minPrice?: string;
+            maxPrice?: string;
+        }) => {
             setError("");
 
             const headers = {
                 Authorization: `Bearer ${token}`,
             };
 
-            const url = search
-                ? `${API}/api/vehicles/search?make=${encodeURIComponent(search)}`
-                : `${API}/api/vehicles`;
+            let url = `${API}/api/vehicles`;
+
+            if (searchParams) {
+                const params = new URLSearchParams();
+                if (searchParams.make) params.append("make", searchParams.make);
+                if (searchParams.model) params.append("model", searchParams.model);
+                if (searchParams.category) params.append("category", searchParams.category);
+                if (searchParams.minPrice) params.append("min_price", searchParams.minPrice);
+                if (searchParams.maxPrice) params.append("max_price", searchParams.maxPrice);
+
+                if (params.toString()) {
+                    url = `${API}/api/vehicles/search?${params.toString()}`;
+                }
+            }
 
             try {
                 const response = await fetch(url, { headers });
@@ -121,7 +142,7 @@ export default function Dashboard({
                 );
             }
 
-            await loadVehicles();
+            await loadVehicles({ make, model, category, minPrice, maxPrice });
         } catch (err) {
             setError(
                 err instanceof Error
@@ -157,7 +178,7 @@ export default function Dashboard({
                 </div>
             </div>
 
-            <div className="mb-6 flex gap-2">
+            <div className="mb-6 flex flex-wrap gap-2">
                 <input
                     type="text"
                     placeholder="Make"
@@ -165,9 +186,37 @@ export default function Dashboard({
                     onChange={(e) => setMake(e.target.value)}
                     className="rounded border px-3 py-2"
                 />
+                <input
+                    type="text"
+                    placeholder="Model"
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    className="rounded border px-3 py-2"
+                />
+                <input
+                    type="text"
+                    placeholder="Category"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="rounded border px-3 py-2"
+                />
+                <input
+                    type="number"
+                    placeholder="Min Price"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                    className="w-32 rounded border px-3 py-2"
+                />
+                <input
+                    type="number"
+                    placeholder="Max Price"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                    className="w-32 rounded border px-3 py-2"
+                />
 
                 <button
-                    onClick={() => loadVehicles(make)}
+                    onClick={() => loadVehicles({ make, model, category, minPrice, maxPrice })}
                     className="rounded bg-blue-600 px-4 py-2 text-white"
                 >
                     Search

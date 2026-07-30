@@ -76,7 +76,7 @@ describe("Dashboard", () => {
         ).toBeInTheDocument();
     });
 
-    test("searches vehicles by make", async () => {
+    test("searches vehicles by criteria", async () => {
         const fetch = vi
             .fn()
             .mockResolvedValueOnce(mockResponse([vehicle]))
@@ -89,8 +89,13 @@ describe("Dashboard", () => {
         await loadVehicle();
 
         await userEvent.type(
-            screen.getByPlaceholderText(/make/i),
+            screen.getByPlaceholderText(/^Make$/i),
             "Toyota",
+        );
+
+        await userEvent.type(
+            screen.getByPlaceholderText(/^Model$/i),
+            "Camry",
         );
 
         await userEvent.click(
@@ -99,7 +104,7 @@ describe("Dashboard", () => {
 
         await waitFor(() =>
             expect(fetch).toHaveBeenLastCalledWith(
-                expect.stringContaining("/api/vehicles/search?make=Toyota"),
+                expect.stringContaining("/api/vehicles/search?make=Toyota&model=Camry"),
                 expect.objectContaining({
                     headers: expect.objectContaining({
                         Authorization: `Bearer ${token}`,
