@@ -4,6 +4,15 @@ A full-stack inventory management application for a car dealership, built with a
 
 `https://incubyte-harshdeep.vercel.app/`
 
+> Since free backend hosting is used, the first request may take up to 30 seconds.
+
+You can view the admin dashboard with these credentials:
+
+```bash
+Username: Admin
+Password: 123
+```
+
 ## Project Overview
 
 This project implements:
