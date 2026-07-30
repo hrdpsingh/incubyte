@@ -4,9 +4,9 @@ export default function VehicleCard({ vehicle, onPurchase }: { vehicle: Vehicle;
     const isOutOfStock = vehicle.quantity === 0;
 
     return (
-        <div className="group flex flex-col justify-between overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 transition-all hover:-translate-y-1 hover:shadow-lg hover:ring-blue-500/30">
-            <div className="p-5">
-                <div className="mb-3 flex items-start justify-between">
+        <div className="group flex h-full flex-col justify-between overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 transition-all hover:-translate-y-1 hover:shadow-lg hover:ring-blue-500/30">
+            <div className="p-4 sm:p-5">
+                <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                     <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
                         {vehicle.category}
                     </span>
@@ -16,7 +16,7 @@ export default function VehicleCard({ vehicle, onPurchase }: { vehicle: Vehicle;
                     </span>
                 </div>
 
-                <h2 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                <h2 className="truncate text-lg font-bold text-slate-900 transition-colors group-hover:text-blue-600 sm:text-xl">
                     {vehicle.make} {vehicle.model}
                 </h2>
 
@@ -27,7 +27,7 @@ export default function VehicleCard({ vehicle, onPurchase }: { vehicle: Vehicle;
                 </div>
             </div>
 
-            <div className="p-5 pt-0">
+            <div className="p-4 pt-0 sm:p-5 sm:pt-0">
                 <button
                     disabled={isOutOfStock}
                     onClick={() => onPurchase(vehicle.id)}

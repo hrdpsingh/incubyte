@@ -159,19 +159,13 @@ describe("Admin", () => {
 
         render(<Admin token="abc" navigate={mockNavigate} />);
 
-        // Updated query to look for the new "e.g. Toyota" placeholder
         await waitFor(() =>
-            expect(screen.getByPlaceholderText(/e\.g\. Toyota/i)).toBeInTheDocument()
+            expect(screen.getByPlaceholderText(/search make, model, or category/i)).toBeInTheDocument()
         );
 
         await userEvent.type(
-            screen.getByPlaceholderText(/e\.g\. Toyota/i),
-            "Toyota"
-        );
-
-        await userEvent.type(
-            screen.getByPlaceholderText(/e\.g\. Camry/i),
-            "Camry"
+            screen.getByPlaceholderText(/search make, model, or category/i),
+            "Toyota Camry"
         );
 
         fireEvent.submit(
@@ -180,7 +174,7 @@ describe("Admin", () => {
 
         await waitFor(() =>
             expect(globalThis.fetch).toHaveBeenLastCalledWith(
-                expect.stringContaining("search?make=Toyota&model=Camry"),
+                expect.stringContaining("search?q=Toyota+Camry"),
                 expect.any(Object)
             )
         );

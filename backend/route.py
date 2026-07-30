@@ -19,6 +19,7 @@ from model import (
     VehicleResponse,
     VehicleUpdate,
 )
+from sqlalchemy import or_
 
 router = APIRouter()
 security = HTTPBearer()
@@ -163,19 +164,20 @@ def list_vehicles(database: DatabaseSession):
 )
 def search_vehicles(
     database: DatabaseSession,
-    make: str | None = None,
-    model: str | None = None,
-    category: str | None = None,
+    q: str | None = None,
     min_price: float | None = Query(None, ge=0, description="Minimum price filter"),
     max_price: float | None = Query(None, ge=0, description="Maximum price filter"),
 ):
     filters = []
-    if make:
-        filters.append(Vehicle.make.ilike(f"%{make}%"))
-    if model:
-        filters.append(Vehicle.model.ilike(f"%{model}%"))
-    if category:
-        filters.append(Vehicle.category.ilike(f"%{category}%"))
+    if q:
+        pattern = f"%{q}%"
+        filters.append(
+            or_(
+                Vehicle.make.ilike(pattern),
+                Vehicle.model.ilike(pattern),
+                Vehicle.category.ilike(pattern),
+            )
+        )
     if min_price is not None:
         filters.append(Vehicle.price >= min_price)
     if max_price is not None:

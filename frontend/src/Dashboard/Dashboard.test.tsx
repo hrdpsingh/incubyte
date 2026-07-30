@@ -89,13 +89,8 @@ describe("Dashboard", () => {
         await loadVehicle();
 
         await userEvent.type(
-            screen.getByPlaceholderText("e.g. Toyota"),
-            "Toyota",
-        );
-
-        await userEvent.type(
-            screen.getByPlaceholderText("e.g. Camry"),
-            "Camry",
+            screen.getByPlaceholderText(/search make, model, or category/i),
+            "Toyota Camry",
         );
 
         await userEvent.click(
@@ -104,7 +99,7 @@ describe("Dashboard", () => {
 
         await waitFor(() =>
             expect(fetch).toHaveBeenLastCalledWith(
-                expect.stringContaining("/api/vehicles/search?make=Toyota&model=Camry"),
+                expect.stringContaining("/api/vehicles/search?q=Toyota+Camry"),
                 expect.objectContaining({
                     headers: expect.objectContaining({
                         Authorization: `Bearer ${token}`,

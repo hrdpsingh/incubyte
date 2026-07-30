@@ -12,9 +12,7 @@ export interface Vehicle {
 export type VehicleFormData = Omit<Vehicle, "id">;
 
 export interface SearchParams {
-    make?: string;
-    model?: string;
-    category?: string;
+    query?: string;
     minPrice?: string;
     maxPrice?: string;
 }

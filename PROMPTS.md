@@ -17,3 +17,4 @@
 - What is left in the frontend to satisfy all the requirements?
 - How do I guard the admin dashboard from access?
 - How do I reduce redundancy in the UI code?
+- How should the search component function?

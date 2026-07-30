@@ -7,9 +7,7 @@ export function buildVehicleSearchUrl(params?: SearchParams): string {
 
     if (params) {
         const sp = new URLSearchParams();
-        if (params.make) sp.append("make", params.make);
-        if (params.model) sp.append("model", params.model);
-        if (params.category) sp.append("category", params.category);
+        if (params.query) sp.append("q", params.query);
         if (params.minPrice) sp.append("min_price", params.minPrice);
         if (params.maxPrice) sp.append("max_price", params.maxPrice);
 
