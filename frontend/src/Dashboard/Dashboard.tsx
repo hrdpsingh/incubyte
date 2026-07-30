@@ -16,6 +16,40 @@ interface DashboardProps {
 
 const API = import.meta.env.VITE_API_URL;
 
+function VehicleCard({
+    vehicle,
+    onPurchase,
+}: {
+    vehicle: Vehicle;
+    onPurchase: (id: number) => void;
+}) {
+    return (
+        <div className="rounded-lg border bg-white p-4 shadow">
+            <h2 className="text-xl font-bold">
+                {vehicle.make} {vehicle.model}
+            </h2>
+
+            <p>Category: {vehicle.category}</p>
+
+            <p className="font-semibold text-green-600">
+                ${vehicle.price}
+            </p>
+
+            <p>Stock: {vehicle.quantity}</p>
+
+            <button
+                disabled={vehicle.quantity === 0}
+                onClick={() => onPurchase(vehicle.id)}
+                className="mt-4 w-full rounded bg-blue-600 p-2 text-white disabled:bg-gray-400"
+            >
+                {vehicle.quantity === 0
+                    ? "Out of Stock"
+                    : "Purchase"}
+            </button>
+        </div>
+    );
+}
+
 export default function Dashboard({
     token,
     logout,
@@ -24,69 +58,73 @@ export default function Dashboard({
     const [make, setMake] = useState("");
     const [error, setError] = useState("");
 
-    const fetchVehicles = useCallback(async () => {
-        setError("");
+    const loadVehicles = useCallback(
+        async (search?: string) => {
+            setError("");
 
-        const response = await fetch(`${API}/api/vehicles`, {
-            headers: {
+            const headers = {
                 Authorization: `Bearer ${token}`,
-            },
-        });
+            };
 
-        if (!response.ok) {
-            setError("Failed to load vehicles");
-            return;
-        }
+            const url = search
+                ? `${API}/api/vehicles/search?make=${encodeURIComponent(search)}`
+                : `${API}/api/vehicles`;
 
-        setVehicles(await response.json());
-    }, [token]);
+            try {
+                const response = await fetch(url, { headers });
+
+                if (!response.ok) {
+                    throw new Error("Failed to load vehicles");
+                }
+
+                setVehicles(await response.json());
+            } catch (err) {
+                setError(
+                    err instanceof Error
+                        ? err.message
+                        : "Something went wrong",
+                );
+            }
+        },
+        [token],
+    );
 
     useEffect(() => {
-        fetchVehicles();
-    }, [fetchVehicles]);
+        loadVehicles();
+    }, [loadVehicles]);
 
-    async function search() {
+    const purchaseVehicle = async (id: number) => {
         setError("");
 
-        const response = await fetch(
-            `${API}/api/vehicles/search?make=${encodeURIComponent(make)}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
+        const headers = {
+            Authorization: `Bearer ${token}`,
+        };
+
+        try {
+            const response = await fetch(
+                `${API}/api/vehicles/${id}/purchase`,
+                {
+                    method: "POST",
+                    headers,
                 },
-            },
-        );
+            );
 
-        if (!response.ok) {
-            setError("Failed to load vehicles");
-            return;
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(
+                    data.detail ?? "Vehicle is unavailable",
+                );
+            }
+
+            await loadVehicles();
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "Something went wrong",
+            );
         }
-
-        setVehicles(await response.json());
-    }
-
-    async function purchase(id: number) {
-        setError("");
-
-        const response = await fetch(
-            `${API}/api/vehicles/${id}/purchase`,
-            {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            },
-        );
-
-        if (!response.ok) {
-            const data = await response.json();
-            setError(data.detail ?? "Vehicle is unavailable");
-            return;
-        }
-
-        await response.json();
-        await fetchVehicles();
-    }
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 p-8">
@@ -113,7 +151,7 @@ export default function Dashboard({
                 />
 
                 <button
-                    onClick={search}
+                    onClick={() => loadVehicles(make)}
                     className="rounded bg-blue-600 px-4 py-2 text-white"
                 >
                     Search
@@ -131,38 +169,11 @@ export default function Dashboard({
             ) : (
                 <div className="grid gap-6 md:grid-cols-3">
                     {vehicles.map((vehicle) => (
-                        <div
+                        <VehicleCard
                             key={vehicle.id}
-                            className="rounded-lg border bg-white p-4 shadow"
-                        >
-                            <h2 className="text-xl font-bold">
-                                {vehicle.make} {vehicle.model}
-                            </h2>
-
-                            <p>
-                                Category: {vehicle.category}
-                            </p>
-
-                            <p className="font-semibold text-green-600">
-                                ${vehicle.price}
-                            </p>
-
-                            <p>
-                                Stock: {vehicle.quantity}
-                            </p>
-
-                            <button
-                                disabled={vehicle.quantity === 0}
-                                onClick={() =>
-                                    purchase(vehicle.id)
-                                }
-                                className="mt-4 w-full rounded bg-blue-600 p-2 text-white disabled:bg-gray-400"
-                            >
-                                {vehicle.quantity === 0
-                                    ? "Out of Stock"
-                                    : "Purchase"}
-                            </button>
-                        </div>
+                            vehicle={vehicle}
+                            onPurchase={purchaseVehicle}
+                        />
                     ))}
                 </div>
             )}

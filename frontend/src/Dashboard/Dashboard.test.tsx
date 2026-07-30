@@ -12,6 +12,19 @@ const vehicle = {
     quantity: 5,
 };
 
+const token = "abc123";
+
+const mockResponse = (data: unknown, ok = true, status = 200) => ({
+    ok,
+    status,
+    json: async () => data,
+});
+
+const renderDashboard = () =>
+    render(<Dashboard token={token} logout={vi.fn()} />);
+
+const loadVehicle = () => screen.findByText("Toyota Camry");
+
 describe("Dashboard", () => {
     beforeEach(() => {
         vi.restoreAllMocks();
@@ -20,32 +33,22 @@ describe("Dashboard", () => {
     test("displays vehicles returned by the API", async () => {
         vi.stubGlobal(
             "fetch",
-            vi.fn(() =>
-                Promise.resolve({
-                    ok: true,
-                    json: () => Promise.resolve([vehicle]),
-                }),
-            ),
+            vi.fn().mockResolvedValue(mockResponse([vehicle])),
         );
 
-        render(<Dashboard token="abc123" logout={vi.fn()} />);
+        renderDashboard();
 
-        expect(await screen.findByText("Toyota Camry")).toBeInTheDocument();
+        expect(await loadVehicle()).toBeInTheDocument();
         expect(screen.getByText("Stock: 5")).toBeInTheDocument();
     });
 
     test("shows a message when no vehicles are available", async () => {
         vi.stubGlobal(
             "fetch",
-            vi.fn(() =>
-                Promise.resolve({
-                    ok: true,
-                    json: () => Promise.resolve([]),
-                }),
-            ),
+            vi.fn().mockResolvedValue(mockResponse([])),
         );
 
-        render(<Dashboard token="abc123" logout={vi.fn()} />);
+        renderDashboard();
 
         expect(
             await screen.findByText(/no vehicles available/i),
@@ -55,14 +58,10 @@ describe("Dashboard", () => {
     test("shows an error if vehicles cannot be loaded", async () => {
         vi.stubGlobal(
             "fetch",
-            vi.fn(() =>
-                Promise.resolve({
-                    ok: false,
-                }),
-            ),
+            vi.fn().mockResolvedValue({ ok: false }),
         );
 
-        render(<Dashboard token="abc123" logout={vi.fn()} />);
+        renderDashboard();
 
         expect(
             await screen.findByText(/failed to load vehicles/i),
@@ -72,20 +71,14 @@ describe("Dashboard", () => {
     test("searches vehicles by make", async () => {
         const fetch = vi
             .fn()
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () => [vehicle],
-            })
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () => [vehicle],
-            });
+            .mockResolvedValueOnce(mockResponse([vehicle]))
+            .mockResolvedValueOnce(mockResponse([vehicle]));
 
         vi.stubGlobal("fetch", fetch);
 
-        render(<Dashboard token="abc123" logout={vi.fn()} />);
+        renderDashboard();
 
-        await screen.findByText("Toyota Camry");
+        await loadVehicle();
 
         await userEvent.type(
             screen.getByPlaceholderText(/make/i),
@@ -101,7 +94,7 @@ describe("Dashboard", () => {
                 expect.stringContaining("/api/vehicles/search?make=Toyota"),
                 expect.objectContaining({
                     headers: expect.objectContaining({
-                        Authorization: "Bearer abc123",
+                        Authorization: `Bearer ${token}`,
                     }),
                 }),
             ),
@@ -111,32 +104,27 @@ describe("Dashboard", () => {
     test("purchases a vehicle", async () => {
         const fetch = vi
             .fn()
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () => [vehicle],
-            })
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({
+            .mockResolvedValueOnce(mockResponse([vehicle]))
+            .mockResolvedValueOnce(
+                mockResponse({
                     ...vehicle,
                     quantity: 4,
                 }),
-            })
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () => [
+            )
+            .mockResolvedValueOnce(
+                mockResponse([
                     {
                         ...vehicle,
                         quantity: 4,
                     },
-                ],
-            });
+                ]),
+            );
 
         vi.stubGlobal("fetch", fetch);
 
-        render(<Dashboard token="abc123" logout={vi.fn()} />);
+        renderDashboard();
 
-        await screen.findByText("Toyota Camry");
+        await loadVehicle();
 
         await userEvent.click(
             screen.getByRole("button", { name: /purchase/i }),
@@ -149,37 +137,33 @@ describe("Dashboard", () => {
                 expect.objectContaining({
                     method: "POST",
                     headers: expect.objectContaining({
-                        Authorization: "Bearer abc123",
+                        Authorization: `Bearer ${token}`,
                     }),
                 }),
             ),
         );
 
         expect(await screen.findByText("Stock: 4")).toBeInTheDocument();
-
         expect(fetch).toHaveBeenCalledTimes(3);
     });
 
     test("shows an error when purchasing an out-of-stock vehicle", async () => {
         const fetch = vi
             .fn()
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () => [vehicle],
-            })
-            .mockResolvedValueOnce({
-                ok: false,
-                status: 400,
-                json: async () => ({
-                    detail: "Vehicle is out of stock",
-                }),
-            });
+            .mockResolvedValueOnce(mockResponse([vehicle]))
+            .mockResolvedValueOnce(
+                mockResponse(
+                    { detail: "Vehicle is out of stock" },
+                    false,
+                    400,
+                ),
+            );
 
         vi.stubGlobal("fetch", fetch);
 
-        render(<Dashboard token="abc123" logout={vi.fn()} />);
+        renderDashboard();
 
-        await screen.findByText("Toyota Camry");
+        await loadVehicle();
 
         await userEvent.click(
             screen.getByRole("button", { name: /purchase/i }),
@@ -191,18 +175,15 @@ describe("Dashboard", () => {
     });
 
     test("includes the bearer token on every request", async () => {
-        const fetch = vi.fn(() =>
-            Promise.resolve({
-                ok: true,
-                json: async () => [vehicle],
-            }),
-        );
+        const fetch = vi
+            .fn()
+            .mockResolvedValue(mockResponse([vehicle]));
 
         vi.stubGlobal("fetch", fetch);
 
         render(<Dashboard token="secret-token" logout={vi.fn()} />);
 
-        await screen.findByText("Toyota Camry");
+        await loadVehicle();
 
         expect(fetch).toHaveBeenCalledWith(
             expect.any(String),
