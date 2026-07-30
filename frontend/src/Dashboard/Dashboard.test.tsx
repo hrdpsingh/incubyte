@@ -20,8 +20,15 @@ const mockResponse = (data: unknown, ok = true, status = 200) => ({
     json: async () => data,
 });
 
-const renderDashboard = () =>
-    render(<Dashboard token={token} logout={vi.fn()} />);
+const defaultProps = {
+    token,
+    logout: vi.fn(),
+    navigate: vi.fn(),
+};
+
+const renderDashboard = (
+    props: Partial<typeof defaultProps> = {},
+) => render(<Dashboard {...defaultProps} {...props} />);
 
 const loadVehicle = () => screen.findByText("Toyota Camry");
 
@@ -181,7 +188,9 @@ describe("Dashboard", () => {
 
         vi.stubGlobal("fetch", fetch);
 
-        render(<Dashboard token="secret-token" logout={vi.fn()} />);
+        renderDashboard({
+            token: "secret-token",
+        });
 
         await loadVehicle();
 

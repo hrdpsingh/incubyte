@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import type { Screen } from '../App';
 
 interface Vehicle {
     id: number;
@@ -12,6 +13,7 @@ interface Vehicle {
 interface DashboardProps {
     token: string;
     logout: () => void;
+    navigate: (screen: Screen) => void;
 }
 
 const API = import.meta.env.VITE_API_URL;
@@ -53,6 +55,7 @@ function VehicleCard({
 export default function Dashboard({
     token,
     logout,
+    navigate,
 }: DashboardProps) {
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [make, setMake] = useState("");
@@ -128,17 +131,25 @@ export default function Dashboard({
 
     return (
         <div className="min-h-screen bg-gray-50 p-8">
-            <div className="mb-8 flex justify-between">
+            <div className="mb-8 flex justify-between items-center">
                 <h1 className="text-3xl font-bold">
                     Inventory
                 </h1>
 
-                <button
-                    onClick={logout}
-                    className="rounded bg-red-500 px-4 py-2 text-white"
-                >
-                    Logout
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => navigate("admin")}
+                        className="rounded bg-gray-800 px-4 py-2 text-white"
+                    >
+                        Admin Panel
+                    </button>
+                    <button
+                        onClick={logout}
+                        className="rounded bg-red-500 px-4 py-2 text-white"
+                    >
+                        Logout
+                    </button>
+                </div>
             </div>
 
             <div className="mb-6 flex gap-2">

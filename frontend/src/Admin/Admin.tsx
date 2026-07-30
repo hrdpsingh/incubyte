@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import type { Screen } from '../App';
 
 export interface Vehicle {
     id?: number;
@@ -9,6 +10,11 @@ export interface Vehicle {
     quantity: number;
 }
 
+interface AdminProps {
+    token: string;
+    navigate: (screen: Screen) => void;
+}
+
 const emptyForm: Vehicle = {
     make: '',
     model: '',
@@ -17,27 +23,33 @@ const emptyForm: Vehicle = {
     quantity: 0,
 };
 
-const Admin: React.FC = () => {
+const API = import.meta.env.VITE_API_URL || "";
+
+const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
     const [formData, setFormData] = useState<Vehicle>(emptyForm);
     const [editingId, setEditingId] = useState<number | null>(null);
-
     const [searchQuery, setSearchQuery] = useState<string>('');
-
     const [restockAmounts, setRestockAmounts] = useState<{ [key: number]: string }>({});
 
-    const fetchVehicles = async (url = '/api/vehicles') => {
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
+
+    const fetchVehicles = useCallback(async (url = `${API}/api/vehicles`) => {
         try {
             setError(null);
             const res = await fetch(url, {
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
             });
-            if (!res.ok) {
-                throw new Error('Failed to load vehicles');
-            }
+            if (!res.ok) throw new Error('Failed to load vehicles');
             const data = await res.json();
             setVehicles(data);
         } catch {
@@ -45,11 +57,11 @@ const Admin: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [token]);
 
     useEffect(() => {
         fetchVehicles();
-    }, []);
+    }, [fetchVehicles]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type } = e.target;
@@ -61,63 +73,33 @@ const Admin: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const payload = {
-            make: formData.make,
-            model: formData.model,
-            category: formData.category,
-            price: Number(formData.price),
-            quantity: Number(formData.quantity),
-        };
+        const payload = { ...formData, price: Number(formData.price), quantity: Number(formData.quantity) };
 
         try {
-            if (editingId !== null) {
-                await fetch(`/api/vehicles/${editingId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                });
-            } else {
-                await fetch('/api/vehicles', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                });
-            }
+            const res = await fetch(editingId !== null ? `${API}/api/vehicles/${editingId}` : `${API}/api/vehicles`, {
+                method: editingId !== null ? 'PUT' : 'POST',
+                headers,
+                body: JSON.stringify(payload),
+            });
+
+            if (!res.ok) throw new Error(await extractError(res));
 
             setFormData(emptyForm);
             setEditingId(null);
             await fetchVehicles();
-        } catch {
-            setError('Operation failed');
-        }
-    };
-
-    const handleEditClick = (vehicle: Vehicle) => {
-        if (vehicle.id !== undefined) {
-            setEditingId(vehicle.id);
-            setFormData({
-                make: vehicle.make,
-                model: vehicle.model,
-                category: vehicle.category,
-                price: vehicle.price,
-                quantity: vehicle.quantity,
-            });
+        } catch (err: any) {
+            setError(err.message || 'Operation failed');
         }
     };
 
     const handleDelete = async (id: number) => {
         try {
-            await fetch(`/api/vehicles/${id}`, {
-                method: 'DELETE',
-            });
+            const res = await fetch(`${API}/api/vehicles/${id}`, { method: 'DELETE', headers });
+            if (!res.ok) throw new Error(await extractError(res));
             await fetchVehicles();
-        } catch {
-            setError('Failed to delete vehicle');
+        } catch (err: any) {
+            setError(err.message || 'Failed to delete vehicle');
         }
-    };
-
-    const handleRestockChange = (id: number, value: string) => {
-        setRestockAmounts((prev) => ({ ...prev, [id]: value }));
     };
 
     const handleRestockSubmit = async (id: number) => {
@@ -125,151 +107,75 @@ const Admin: React.FC = () => {
         if (isNaN(amount) || amount <= 0) return;
 
         try {
-            await fetch(`/api/vehicles/${id}/restock`, {
+            const res = await fetch(`${API}/api/vehicles/${id}/restock`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ quantity: amount }),
             });
+            if (!res.ok) throw new Error(await extractError(res));
             setRestockAmounts((prev) => ({ ...prev, [id]: '' }));
             await fetchVehicles();
-        } catch {
-            setError('Failed to restock vehicle');
+        } catch (err: any) {
+            setError(err.message || 'Failed to restock vehicle');
         }
     };
 
+    const extractError = async (res: Response) => {
+        try { const data = await res.json(); return data.detail; } catch { return 'Action failed. (Are you an admin?)'; }
+    }
+
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
-        await fetchVehicles(`/api/vehicles/search?make=${encodeURIComponent(searchQuery)}`);
+        await fetchVehicles(`${API}/api/vehicles/search?make=${encodeURIComponent(searchQuery)}`);
     };
 
-    const formatPrice = (price: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            maximumFractionDigits: 0,
-        }).format(price);
-    };
-
-    if (loading) {
-        return <div>Loading...</div>;
-    }
-
-    if (error) {
-        return <div>{error}</div>;
-    }
+    if (loading) return <div className="p-8 text-center text-xl">Loading...</div>;
 
     return (
-        <div>
-            <h1>Admin Dashboard</h1>
+        <div className="min-h-screen bg-gray-50 p-8">
+            <div className="mb-8 flex items-center justify-between">
+                <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+                <button onClick={() => navigate('dashboard')} className="rounded bg-gray-600 px-4 py-2 text-white">
+                    Back to Inventory
+                </button>
+            </div>
 
-            <form onSubmit={handleSearch}>
-                <input
-                    type="text"
-                    placeholder="Search Make"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <button type="submit">Search</button>
-            </form>
+            {error && <div className="mb-4 rounded bg-red-100 p-4 text-red-700">{error}</div>}
 
-            <h2>{editingId ? 'Edit Vehicle' : 'Add Vehicle'}</h2>
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="make">Make</label>
-                    <input
-                        id="make"
-                        name="make"
-                        type="text"
-                        value={formData.make}
-                        onChange={handleInputChange}
-                        required
-                    />
-                </div>
+            <div className="mb-8 rounded-xl bg-white p-6 shadow">
+                <h2 className="mb-4 text-xl font-bold">{editingId ? 'Edit Vehicle' : 'Add Vehicle'}</h2>
+                <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4 md:grid-cols-6">
+                    <input name="make" placeholder="Make" value={formData.make} onChange={handleInputChange} required className="rounded border p-2" />
+                    <input name="model" placeholder="Model" value={formData.model} onChange={handleInputChange} required className="rounded border p-2" />
+                    <input name="category" placeholder="Category" value={formData.category} onChange={handleInputChange} required className="rounded border p-2" />
+                    <input name="price" type="number" placeholder="Price" value={formData.price || ''} onChange={handleInputChange} required className="rounded border p-2" />
+                    <input name="quantity" type="number" placeholder="Quantity" value={formData.quantity || ''} onChange={handleInputChange} required className="rounded border p-2" />
+                    <button type="submit" className="rounded bg-green-600 p-2 text-white hover:bg-green-700">{editingId ? 'Save' : 'Add'}</button>
+                </form>
+            </div>
 
-                <div>
-                    <label htmlFor="model">Model</label>
-                    <input
-                        id="model"
-                        name="model"
-                        type="text"
-                        value={formData.model}
-                        onChange={handleInputChange}
-                        required
-                    />
-                </div>
+            <div className="mb-6 flex gap-2">
+                <form onSubmit={handleSearch} className="flex gap-2">
+                    <input type="text" placeholder="Search Make" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="rounded border px-3 py-2" />
+                    <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white">Search</button>
+                </form>
+            </div>
 
-                <div>
-                    <label htmlFor="category">Category</label>
-                    <input
-                        id="category"
-                        name="category"
-                        type="text"
-                        value={formData.category}
-                        onChange={handleInputChange}
-                        required
-                    />
-                </div>
-
-                <div>
-                    <label htmlFor="price">Price</label>
-                    <input
-                        id="price"
-                        name="price"
-                        type="number"
-                        value={formData.price || ''}
-                        onChange={handleInputChange}
-                        required
-                    />
-                </div>
-
-                <div>
-                    <label htmlFor="quantity">Quantity</label>
-                    <input
-                        id="quantity"
-                        name="quantity"
-                        type="number"
-                        value={formData.quantity || ''}
-                        onChange={handleInputChange}
-                        required
-                    />
-                </div>
-
-                <button type="submit">{editingId ? 'Save' : 'Add Vehicle'}</button>
-            </form>
-
-            <h2>Vehicles</h2>
-            <ul>
-                {vehicles.map((vehicle) => (
-                    <li key={vehicle.id}>
+            <div className="grid gap-4">
+                {vehicles.map((v) => (
+                    <div key={v.id} className="flex flex-col md:flex-row justify-between items-center rounded-lg border bg-white p-4 shadow">
                         <div>
-                            <span>{vehicle.make}</span> - <span>{vehicle.model}</span> -{' '}
-                            <span>{vehicle.category}</span> - <span>{formatPrice(vehicle.price)}</span> -{' '}
-                            <span>Qty: {vehicle.quantity}</span>
+                            <span className="font-bold">{v.make} {v.model}</span> | {v.category} | ${v.price} | Stock: {v.quantity}
                         </div>
-
-                        {vehicle.id !== undefined && (
-                            <div>
-                                <button type="button" onClick={() => handleEditClick(vehicle)}>
-                                    Edit
-                                </button>
-                                <button type="button" onClick={() => handleDelete(vehicle.id!)}>
-                                    Delete
-                                </button>
-
-                                <input
-                                    type="number"
-                                    placeholder="Restock amount"
-                                    value={restockAmounts[vehicle.id] || ''}
-                                    onChange={(e) => handleRestockChange(vehicle.id!, e.target.value)}
-                                />
-                                <button type="button" onClick={() => handleRestockSubmit(vehicle.id!)}>
-                                    Restock
-                                </button>
-                            </div>
-                        )}
-                    </li>
+                        <div className="mt-4 flex gap-2 md:mt-0">
+                            <button onClick={() => { setEditingId(v.id!); setFormData(v); }} className="rounded bg-yellow-500 px-3 py-1 text-white">Edit</button>
+                            <button onClick={() => handleDelete(v.id!)} className="rounded bg-red-500 px-3 py-1 text-white">Delete</button>
+                            <input type="number" placeholder="Qty" value={restockAmounts[v.id!] || ''} onChange={(e) => setRestockAmounts(prev => ({ ...prev, [v.id!]: e.target.value }))} className="w-20 rounded border p-1" />
+                            <button onClick={() => handleRestockSubmit(v.id!)} className="rounded bg-indigo-600 px-3 py-1 text-white">Restock</button>
+                        </div>
+                    </div>
                 ))}
-            </ul>
+            </div>
         </div>
     );
 };

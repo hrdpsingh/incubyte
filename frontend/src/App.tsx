@@ -3,19 +3,21 @@ import { useState } from "react";
 import Login from "./Login/Login";
 import Register from "./Register/Register";
 import Dashboard from "./Dashboard/Dashboard";
+import Admin from "./Admin/Admin";
 
-type Screen = "login" | "register";
+export type Screen = "login" | "register" | "admin" | "dashboard";
 
 export default function App() {
-  const [token, setToken] = useState<string | null>(
+  const [token, setToken] = useState<string | null>(() =>
     localStorage.getItem("token")
   );
 
-  const [screen, setScreen] = useState<Screen>("login");
+  const [screen, setScreen] = useState<Screen>("dashboard");
 
   function handleLogin(token: string) {
     localStorage.setItem("token", token);
     setToken(token);
+    setScreen("dashboard");
   }
 
   function logout() {
@@ -24,27 +26,17 @@ export default function App() {
     setScreen("login");
   }
 
-  if (token) {
-    return (
-      <Dashboard
-        token={token}
-        logout={logout}
-      />
-    );
+  if (!token) {
+    if (screen === "register") {
+      return <Register navigate={setScreen} />;
+    }
+
+    return <Login setToken={handleLogin} navigate={setScreen} />;
   }
 
-  if (screen === "register") {
-    return (
-      <Register
-        navigate={setScreen}
-      />
-    );
+  if (screen === "admin") {
+    return <Admin token={token} navigate={setScreen} />;
   }
 
-  return (
-    <Login
-      setToken={handleLogin}
-      navigate={setScreen}
-    />
-  );
+  return <Dashboard token={token} logout={logout} navigate={setScreen} />;
 }
