@@ -11,7 +11,11 @@ export default function App() {
   const [token, setToken] = useState<string | null>(() =>
     localStorage.getItem("token")
   );
-  const [isAdmin, setIsAdmin] = useState(false);
+
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    return localStorage.getItem("isAdmin") === "true";
+  });
+
   const [screen, setScreen] = useState<Screen>("dashboard");
 
   function handleLogin(token: string) {
@@ -20,8 +24,14 @@ export default function App() {
     setScreen("dashboard");
   }
 
+  function handleSetIsAdmin(adminStatus: boolean) {
+    localStorage.setItem("isAdmin", String(adminStatus));
+    setIsAdmin(adminStatus);
+  }
+
   function logout() {
     localStorage.removeItem("token");
+    localStorage.removeItem("isAdmin");
     setToken(null);
     setIsAdmin(false);
     setScreen("login");
@@ -32,12 +42,34 @@ export default function App() {
       return <Register navigate={setScreen} />;
     }
 
-    return <Login setToken={handleLogin} setIsAdmin={setIsAdmin} navigate={setScreen} />;
+    return (
+      <Login
+        setToken={handleLogin}
+        setIsAdmin={handleSetIsAdmin}
+        navigate={setScreen}
+      />
+    );
   }
 
   if (screen === "admin") {
-    return <Admin token={token} navigate={setScreen} />;
+    return isAdmin ? (
+      <Admin token={token} navigate={setScreen} />
+    ) : (
+      <Dashboard
+        token={token}
+        isAdmin={isAdmin}
+        logout={logout}
+        navigate={setScreen}
+      />
+    );
   }
 
-  return <Dashboard token={token} isAdmin={isAdmin} logout={logout} navigate={setScreen} />;
+  return (
+    <Dashboard
+      token={token}
+      isAdmin={isAdmin}
+      logout={logout}
+      navigate={setScreen}
+    />
+  );
 }
