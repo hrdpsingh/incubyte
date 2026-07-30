@@ -89,12 +89,12 @@ describe("Dashboard", () => {
         await loadVehicle();
 
         await userEvent.type(
-            screen.getByPlaceholderText(/^Make$/i),
+            screen.getByPlaceholderText(/Search Make/i),
             "Toyota",
         );
 
         await userEvent.type(
-            screen.getByPlaceholderText(/^Model$/i),
+            screen.getByPlaceholderText(/Search Model/i),
             "Camry",
         );
 

@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-    render,
-    screen,
-    waitFor,
-    fireEvent,
-} from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Admin from "./Admin";
 
@@ -35,11 +30,9 @@ beforeEach(() => {
 describe("Admin", () => {
     it("shows loading then renders vehicles", async () => {
         mockFetch(vehicles);
-
         render(<Admin token="token" navigate={mockNavigate} />);
 
         expect(screen.getByText(/loading/i)).toBeInTheDocument();
-
         expect(await screen.findByText(/Toyota Camry/)).toBeInTheDocument();
 
         expect(globalThis.fetch).toHaveBeenCalledWith(
@@ -54,15 +47,12 @@ describe("Admin", () => {
 
     it("navigates back to inventory", async () => {
         mockFetch(vehicles);
-
         render(<Admin token="token" navigate={mockNavigate} />);
 
         await screen.findByText(/Toyota Camry/);
 
         await userEvent.click(
-            screen.getByRole("button", {
-                name: /back to inventory/i,
-            })
+            screen.getByRole("button", { name: /back to inventory/i })
         );
 
         expect(mockNavigate).toHaveBeenCalledWith("dashboard");
@@ -71,18 +61,9 @@ describe("Admin", () => {
     it("adds a vehicle", async () => {
         globalThis.fetch = vi
             .fn()
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () => [],
-            })
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({}),
-            })
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () => vehicles,
-            });
+            .mockResolvedValueOnce({ ok: true, json: async () => [] })
+            .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+            .mockResolvedValueOnce({ ok: true, json: async () => vehicles });
 
         render(<Admin token="abc" navigate={mockNavigate} />);
 
@@ -96,9 +77,7 @@ describe("Admin", () => {
         await userEvent.type(screen.getByPlaceholderText("Price"), "25000");
         await userEvent.type(screen.getByPlaceholderText("Quantity"), "5");
 
-        await userEvent.click(
-            screen.getByRole("button", { name: /^Add$/ })
-        );
+        await userEvent.click(screen.getByRole("button", { name: /^Add$/ }));
 
         expect(globalThis.fetch).toHaveBeenCalledWith(
             expect.stringContaining("/api/vehicles"),
@@ -118,92 +97,54 @@ describe("Admin", () => {
     it("deletes a vehicle", async () => {
         globalThis.fetch = vi
             .fn()
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () => vehicles,
-            })
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({}),
-            })
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () => [],
-            });
+            .mockResolvedValueOnce({ ok: true, json: async () => vehicles })
+            .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+            .mockResolvedValueOnce({ ok: true, json: async () => [] });
 
         render(<Admin token="abc" navigate={mockNavigate} />);
 
         await screen.findByText(/Toyota Camry/);
-
         await userEvent.click(screen.getByRole("button", { name: /delete/i }));
 
         expect(globalThis.fetch).toHaveBeenCalledWith(
             expect.stringContaining("/api/vehicles/1"),
-            expect.objectContaining({
-                method: "DELETE",
-            })
+            expect.objectContaining({ method: "DELETE" })
         );
     });
 
     it("loads vehicle into form when edit is clicked", async () => {
         mockFetch(vehicles);
-
         render(<Admin token="abc" navigate={mockNavigate} />);
 
         await screen.findByText(/Toyota Camry/);
-
         await userEvent.click(screen.getByRole("button", { name: /edit/i }));
 
-        expect(
-            screen.getByDisplayValue("Toyota")
-        ).toBeInTheDocument();
-
-        expect(
-            screen.getByDisplayValue("Camry")
-        ).toBeInTheDocument();
-
-        expect(
-            screen.getByRole("button", { name: /save/i })
-        ).toBeInTheDocument();
+        expect(screen.getByDisplayValue("Toyota")).toBeInTheDocument();
+        expect(screen.getByDisplayValue("Camry")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     });
 
     it("restocks a vehicle", async () => {
         globalThis.fetch = vi
             .fn()
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () => vehicles,
-            })
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({}),
-            })
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () => vehicles,
-            });
+            .mockResolvedValueOnce({ ok: true, json: async () => vehicles })
+            .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+            .mockResolvedValueOnce({ ok: true, json: async () => vehicles });
 
         render(<Admin token="abc" navigate={mockNavigate} />);
 
         await screen.findByText(/Toyota Camry/);
 
         const qtyInput = screen.getByPlaceholderText("Qty");
-
         await userEvent.type(qtyInput, "4");
 
-        await userEvent.click(
-            screen.getByRole("button", {
-                name: /restock/i,
-            })
-        );
+        await userEvent.click(screen.getByRole("button", { name: /restock/i }));
 
         expect(globalThis.fetch).toHaveBeenCalledWith(
             expect.stringContaining("/api/vehicles/1/restock"),
             expect.objectContaining({
                 method: "POST",
-                body: JSON.stringify({
-                    quantity: 4,
-                }),
+                body: JSON.stringify({ quantity: 4 }),
             })
         );
     });
@@ -211,28 +152,22 @@ describe("Admin", () => {
     it("searches vehicles", async () => {
         globalThis.fetch = vi
             .fn()
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () => [],
-            })
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () => vehicles,
-            });
+            .mockResolvedValueOnce({ ok: true, json: async () => [] })
+            .mockResolvedValueOnce({ ok: true, json: async () => vehicles });
 
         render(<Admin token="abc" navigate={mockNavigate} />);
 
         await waitFor(() =>
-            expect(screen.getByPlaceholderText(/search make/i)).toBeInTheDocument()
+            expect(screen.getByPlaceholderText(/Search Make/i)).toBeInTheDocument()
         );
 
         await userEvent.type(
-            screen.getByPlaceholderText(/search make/i),
+            screen.getByPlaceholderText(/Search Make/i),
             "Toyota"
         );
 
         await userEvent.type(
-            screen.getByPlaceholderText(/search model/i),
+            screen.getByPlaceholderText(/Search Model/i),
             "Camry"
         );
 

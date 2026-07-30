@@ -22,11 +22,13 @@ test("logs in successfully", async () => {
 
     const setToken = vi.fn();
     const navigate = vi.fn();
+    const setIsAdmin = vi.fn();
 
     render(
         <Login
             setToken={setToken}
             navigate={navigate}
+            setIsAdmin={setIsAdmin}
         />
     );
 

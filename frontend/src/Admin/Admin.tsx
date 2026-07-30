@@ -1,72 +1,50 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import type { Screen } from '../App';
-
-export interface Vehicle {
-    id?: number;
-    make: string;
-    model: string;
-    category: string;
-    price: number;
-    quantity: number;
-}
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import type { Screen, Vehicle, VehicleFormData, SearchParams } from '../types';
+import { API, buildVehicleSearchUrl, extractError } from '../utilities';
+import VehicleSearch from '../Components/VehicleSearch';
 
 interface AdminProps {
     token: string;
     navigate: (screen: Screen) => void;
 }
 
-const emptyForm: Vehicle = {
-    make: '',
-    model: '',
-    category: '',
-    price: 0,
-    quantity: 0,
-};
-
-const API = import.meta.env.VITE_API_URL || "";
+const emptyForm: VehicleFormData = { make: '', model: '', category: '', price: 0, quantity: 0 };
 
 const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
-    const [formData, setFormData] = useState<Vehicle>(emptyForm);
+    const [formData, setFormData] = useState<VehicleFormData>(emptyForm);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [restockAmounts, setRestockAmounts] = useState<{ [key: number]: string }>({});
+    const [currentParams, setCurrentParams] = useState<SearchParams>({});
 
-    const [searchMake, setSearchMake] = useState<string>('');
-    const [searchModel, setSearchModel] = useState<string>('');
-    const [searchCategory, setSearchCategory] = useState<string>('');
-    const [searchMinPrice, setSearchMinPrice] = useState<string>('');
-    const [searchMaxPrice, setSearchMaxPrice] = useState<string>('');
-
-    const headers = {
+    const headers = useMemo(() => ({
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
-    };
+    }), [token]);
 
-    const fetchVehicles = useCallback(async (url = `${API}/api/vehicles`) => {
+    // 2. Change the dependency array to [headers]
+    const fetchVehicles = useCallback(async (params?: SearchParams) => {
         try {
             setError(null);
-            const res = await fetch(url, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
+            const res = await fetch(buildVehicleSearchUrl(params), { headers });
             if (!res.ok) throw new Error('Failed to load vehicles');
-            const data = await res.json();
-            setVehicles(data);
+            setVehicles(await res.json());
         } catch {
             setError('Failed to load vehicles');
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, [headers]);
 
-    useEffect(() => {
-        fetchVehicles();
-    }, [fetchVehicles]);
+    useEffect(() => { fetchVehicles(); }, [fetchVehicles]);
+
+    const handleSearch = async (params: SearchParams) => {
+        setCurrentParams(params);
+        await fetchVehicles(params);
+    };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type } = e.target;
@@ -81,17 +59,16 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
         const payload = { ...formData, price: Number(formData.price), quantity: Number(formData.quantity) };
 
         try {
-            const res = await fetch(editingId !== null ? `${API}/api/vehicles/${editingId}` : `${API}/api/vehicles`, {
-                method: editingId !== null ? 'PUT' : 'POST',
+            const res = await fetch(editingId ? `${API}/api/vehicles/${editingId}` : `${API}/api/vehicles`, {
+                method: editingId ? 'PUT' : 'POST',
                 headers,
                 body: JSON.stringify(payload),
             });
-
-            if (!res.ok) throw new Error(await extractError(res));
+            if (!res.ok) throw new Error(await extractError(res, 'Action failed. (Are you an admin?)'));
 
             setFormData(emptyForm);
             setEditingId(null);
-            await fetchVehicles();
+            await fetchVehicles(currentParams);
         } catch (err: any) {
             setError(err.message || 'Operation failed');
         }
@@ -101,7 +78,7 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
         try {
             const res = await fetch(`${API}/api/vehicles/${id}`, { method: 'DELETE', headers });
             if (!res.ok) throw new Error(await extractError(res));
-            await fetchVehicles();
+            await fetchVehicles(currentParams);
         } catch (err: any) {
             setError(err.message || 'Failed to delete vehicle');
         }
@@ -118,28 +95,12 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
                 body: JSON.stringify({ quantity: amount }),
             });
             if (!res.ok) throw new Error(await extractError(res));
+
             setRestockAmounts((prev) => ({ ...prev, [id]: '' }));
-            await fetchVehicles();
+            await fetchVehicles(currentParams);
         } catch (err: any) {
             setError(err.message || 'Failed to restock vehicle');
         }
-    };
-
-    const extractError = async (res: Response) => {
-        try { const data = await res.json(); return data.detail; } catch { return 'Action failed. (Are you an admin?)'; }
-    }
-
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const params = new URLSearchParams();
-        if (searchMake) params.append("make", searchMake);
-        if (searchModel) params.append("model", searchModel);
-        if (searchCategory) params.append("category", searchCategory);
-        if (searchMinPrice) params.append("min_price", searchMinPrice);
-        if (searchMaxPrice) params.append("max_price", searchMaxPrice);
-
-        const url = params.toString() ? `${API}/api/vehicles/search?${params.toString()}` : `${API}/api/vehicles`;
-        await fetchVehicles(url);
     };
 
     if (loading) return <div className="p-8 text-center text-xl">Loading...</div>;
@@ -167,16 +128,7 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
                 </form>
             </div>
 
-            <div className="mb-6">
-                <form onSubmit={handleSearch} className="flex flex-wrap gap-2">
-                    <input type="text" placeholder="Search Make" value={searchMake} onChange={(e) => setSearchMake(e.target.value)} className="rounded border px-3 py-2" />
-                    <input type="text" placeholder="Search Model" value={searchModel} onChange={(e) => setSearchModel(e.target.value)} className="rounded border px-3 py-2" />
-                    <input type="text" placeholder="Search Category" value={searchCategory} onChange={(e) => setSearchCategory(e.target.value)} className="rounded border px-3 py-2" />
-                    <input type="number" placeholder="Min Price" value={searchMinPrice} onChange={(e) => setSearchMinPrice(e.target.value)} className="w-32 rounded border px-3 py-2" />
-                    <input type="number" placeholder="Max Price" value={searchMaxPrice} onChange={(e) => setSearchMaxPrice(e.target.value)} className="w-32 rounded border px-3 py-2" />
-                    <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white">Search</button>
-                </form>
-            </div>
+            <VehicleSearch onSearch={handleSearch} />
 
             <div className="grid gap-4">
                 {vehicles.map((v) => (
@@ -185,10 +137,10 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
                             <span className="font-bold">{v.make} {v.model}</span> | {v.category} | ${v.price} | Stock: {v.quantity}
                         </div>
                         <div className="mt-4 flex gap-2 md:mt-0">
-                            <button onClick={() => { setEditingId(v.id!); setFormData(v); }} className="rounded bg-yellow-500 px-3 py-1 text-white">Edit</button>
-                            <button onClick={() => handleDelete(v.id!)} className="rounded bg-red-500 px-3 py-1 text-white">Delete</button>
-                            <input type="number" placeholder="Qty" value={restockAmounts[v.id!] || ''} onChange={(e) => setRestockAmounts(prev => ({ ...prev, [v.id!]: e.target.value }))} className="w-20 rounded border p-1" />
-                            <button onClick={() => handleRestockSubmit(v.id!)} className="rounded bg-indigo-600 px-3 py-1 text-white">Restock</button>
+                            <button onClick={() => { setEditingId(v.id); const { id: _, ...rest } = v; setFormData(rest); }} className="rounded bg-yellow-500 px-3 py-1 text-white">Edit</button>
+                            <button onClick={() => handleDelete(v.id)} className="rounded bg-red-500 px-3 py-1 text-white">Delete</button>
+                            <input type="number" placeholder="Qty" value={restockAmounts[v.id] || ''} onChange={(e) => setRestockAmounts(prev => ({ ...prev, [v.id]: e.target.value }))} className="w-20 rounded border p-1" />
+                            <button onClick={() => handleRestockSubmit(v.id)} className="rounded bg-indigo-600 px-3 py-1 text-white">Restock</button>
                         </div>
                     </div>
                 ))}
