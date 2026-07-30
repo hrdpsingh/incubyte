@@ -10,10 +10,11 @@ load_dotenv()
 
 url = os.getenv("DATABASE_URL", "sqlite:///dealership.db")
 
-engine = create_engine(
-    url,
-    connect_args={"check_same_thread": False},
-)
+connection_arguments = {}
+if url.startswith("sqlite"):
+    connection_arguments["check_same_thread"] = False
+
+engine = create_engine(url, connect_args=connection_arguments)
 
 LocalSession = sessionmaker(
     autocommit=False,
