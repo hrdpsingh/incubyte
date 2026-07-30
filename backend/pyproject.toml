@@ -21,3 +21,6 @@ dev = [
 [tool.pytest.ini_options]
 pythonpath = ["."]
 python_files = ["test.py"]
+
+[tool.setuptools]
+py-modules = ["main", "database", "model", "route"]
