@@ -13,3 +13,5 @@
 - How do I reduce duplication in my tests?
 - What dependencies do I need for Tailwind?
 - How should I organize my components and tests?
+- Does the backend satisfy all the requirements?
+- What is left in the frontend to satisfy all the requirements?
