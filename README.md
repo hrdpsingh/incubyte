@@ -2,6 +2,8 @@
 
 A full-stack inventory management application for a car dealership, built with a FastAPI (Pytest + SQLite + SQLAlchemy) and React (Vite + TypeScript + Tailwind). Supports user authentication, role-based access control, vehicle CRUD, search/filtering, and purchase/restock inventory operations.
 
+`https://incubyte-harshdeep.vercel.app/`
+
 ## Project Overview
 
 This project implements:

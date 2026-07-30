@@ -18,3 +18,4 @@
 - How do I guard the admin dashboard from access?
 - How do I reduce redundancy in the UI code?
 - How should the search component function?
+- How do I deploy a web app for free?

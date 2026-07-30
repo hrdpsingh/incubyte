@@ -13,7 +13,6 @@ wheels/
 .pytest_cache/
 .ruff_cache/
 dealership.db
-admin.py
 
 # Secrets
 .env
