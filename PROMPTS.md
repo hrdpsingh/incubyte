@@ -12,3 +12,4 @@
 - Do I need a separate endpoint to promote an user to admin?
 - How do I reduce duplication in my tests?
 - What dependencies do I need for Tailwind?
+- How should I organize my components and tests?
