@@ -11,9 +11,12 @@ interface LoginProps {
 
 export default function Login({ setToken, setIsAdmin, navigate }: LoginProps) {
     const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     async function handleSubmit(username: string, password: string) {
         setError("");
+        setIsLoading(true);
+
         try {
             const response = await fetch(`${API}/api/auth/login`, {
                 method: "POST",
@@ -31,6 +34,8 @@ export default function Login({ setToken, setIsAdmin, navigate }: LoginProps) {
             setIsAdmin(data.is_admin);
         } catch {
             setError("Unable to contact server.");
+        } finally {
+            setIsLoading(false);
         }
     }
 
@@ -39,6 +44,7 @@ export default function Login({ setToken, setIsAdmin, navigate }: LoginProps) {
             title="Welcome Back"
             subtitle="Sign in to access the dealership"
             error={error}
+            isLoading={isLoading}
             submitLabel="Sign In"
             switchText="Don't have an account?"
             switchActionLabel="Register"

@@ -1,10 +1,12 @@
 import { useState } from "react";
+import Spinner from "./Spinner";
 
 interface AuthFormProps {
     title: string;
     subtitle?: string;
     error?: string;
     success?: string;
+    isLoading?: boolean;
     submitLabel: string;
     submitClassName?: string;
     switchText: string;
@@ -18,6 +20,7 @@ export default function AuthForm({
     subtitle,
     error,
     success,
+    isLoading = false,
     submitLabel,
     submitClassName = "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500/50",
     switchText,
@@ -87,8 +90,10 @@ export default function AuthForm({
 
                     <button
                         type="submit"
-                        className={`w-full rounded-xl p-3 font-semibold text-white shadow-sm transition-all active:scale-[0.98] focus:outline-none focus:ring-4 ${submitClassName}`}
+                        disabled={isLoading}
+                        className={`flex items-center justify-center gap-2 w-full rounded-xl p-3 font-semibold text-white shadow-sm transition-all active:scale-[0.98] focus:outline-none focus:ring-4 ${submitClassName}`}
                     >
+                        {isLoading && <Spinner />}
                         {submitLabel}
                     </button>
                 </form>
