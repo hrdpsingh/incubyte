@@ -77,7 +77,8 @@ describe("Admin", () => {
         await userEvent.type(screen.getByPlaceholderText("Price"), "25000");
         await userEvent.type(screen.getByPlaceholderText("Quantity"), "5");
 
-        await userEvent.click(screen.getByRole("button", { name: /^Add$/ }));
+        // Updated to reflect the new UI button text "Add Vehicle"
+        await userEvent.click(screen.getByRole("button", { name: /add vehicle/i }));
 
         expect(globalThis.fetch).toHaveBeenCalledWith(
             expect.stringContaining("/api/vehicles"),
@@ -121,6 +122,7 @@ describe("Admin", () => {
 
         expect(screen.getByDisplayValue("Toyota")).toBeInTheDocument();
         expect(screen.getByDisplayValue("Camry")).toBeInTheDocument();
+        // The new UI uses "Save Changes", which is covered by /save/i
         expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     });
 
@@ -157,17 +159,18 @@ describe("Admin", () => {
 
         render(<Admin token="abc" navigate={mockNavigate} />);
 
+        // Updated query to look for the new "e.g. Toyota" placeholder
         await waitFor(() =>
-            expect(screen.getByPlaceholderText(/Search Make/i)).toBeInTheDocument()
+            expect(screen.getByPlaceholderText(/e\.g\. Toyota/i)).toBeInTheDocument()
         );
 
         await userEvent.type(
-            screen.getByPlaceholderText(/Search Make/i),
+            screen.getByPlaceholderText(/e\.g\. Toyota/i),
             "Toyota"
         );
 
         await userEvent.type(
-            screen.getByPlaceholderText(/Search Model/i),
+            screen.getByPlaceholderText(/e\.g\. Camry/i),
             "Camry"
         );
 

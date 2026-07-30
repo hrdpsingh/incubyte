@@ -25,7 +25,6 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
         'Authorization': `Bearer ${token}`
     }), [token]);
 
-    // 2. Change the dependency array to [headers]
     const fetchVehicles = useCallback(async (params?: SearchParams) => {
         try {
             setError(null);
@@ -103,47 +102,120 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
         }
     };
 
-    if (loading) return <div className="p-8 text-center text-xl">Loading...</div>;
+    if (loading) return (
+        <div className="flex min-h-screen items-center justify-center bg-slate-50">
+            <div className="text-lg font-medium text-slate-500 animate-pulse">Loading dashboard...</div>
+        </div>
+    );
+
+    const inputClasses = "w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20";
 
     return (
-        <div className="min-h-screen bg-gray-50 p-8">
-            <div className="mb-8 flex items-center justify-between">
-                <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-                <button onClick={() => navigate('dashboard')} className="rounded bg-gray-600 px-4 py-2 text-white">
-                    Back to Inventory
-                </button>
-            </div>
-
-            {error && <div className="mb-4 rounded bg-red-100 p-4 text-red-700">{error}</div>}
-
-            <div className="mb-8 rounded-xl bg-white p-6 shadow">
-                <h2 className="mb-4 text-xl font-bold">{editingId ? 'Edit Vehicle' : 'Add Vehicle'}</h2>
-                <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4 md:grid-cols-6">
-                    <input name="make" placeholder="Make" value={formData.make} onChange={handleInputChange} required className="rounded border p-2" />
-                    <input name="model" placeholder="Model" value={formData.model} onChange={handleInputChange} required className="rounded border p-2" />
-                    <input name="category" placeholder="Category" value={formData.category} onChange={handleInputChange} required className="rounded border p-2" />
-                    <input name="price" type="number" placeholder="Price" value={formData.price || ''} onChange={handleInputChange} required className="rounded border p-2" />
-                    <input name="quantity" type="number" placeholder="Quantity" value={formData.quantity || ''} onChange={handleInputChange} required className="rounded border p-2" />
-                    <button type="submit" className="rounded bg-green-600 p-2 text-white hover:bg-green-700">{editingId ? 'Save' : 'Add'}</button>
-                </form>
-            </div>
-
-            <VehicleSearch onSearch={handleSearch} />
-
-            <div className="grid gap-4">
-                {vehicles.map((v) => (
-                    <div key={v.id} className="flex flex-col md:flex-row justify-between items-center rounded-lg border bg-white p-4 shadow">
-                        <div>
-                            <span className="font-bold">{v.make} {v.model}</span> | {v.category} | ${v.price} | Stock: {v.quantity}
-                        </div>
-                        <div className="mt-4 flex gap-2 md:mt-0">
-                            <button onClick={() => { setEditingId(v.id); const { id: _, ...rest } = v; setFormData(rest); }} className="rounded bg-yellow-500 px-3 py-1 text-white">Edit</button>
-                            <button onClick={() => handleDelete(v.id)} className="rounded bg-red-500 px-3 py-1 text-white">Delete</button>
-                            <input type="number" placeholder="Qty" value={restockAmounts[v.id] || ''} onChange={(e) => setRestockAmounts(prev => ({ ...prev, [v.id]: e.target.value }))} className="w-20 rounded border p-1" />
-                            <button onClick={() => handleRestockSubmit(v.id)} className="rounded bg-indigo-600 px-3 py-1 text-white">Restock</button>
-                        </div>
+        <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+            <div className="mx-auto max-w-6xl">
+                <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Admin Dashboard</h1>
+                        <p className="mt-1 text-sm text-slate-500">Manage your vehicle inventory and stock.</p>
                     </div>
-                ))}
+                    <button
+                        onClick={() => navigate('dashboard')}
+                        className="inline-flex items-center justify-center rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors"
+                    >
+                        &larr; Back to Inventory
+                    </button>
+                </div>
+
+                {error && (
+                    <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
+                        {error}
+                    </div>
+                )}
+
+                <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <h2 className="mb-5 text-lg font-semibold text-slate-800">
+                        {editingId ? 'Edit Vehicle Details' : 'Register New Vehicle'}
+                    </h2>
+                    <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
+                        <div className="lg:col-span-1">
+                            <input name="make" placeholder="Make" value={formData.make} onChange={handleInputChange} required className={inputClasses} />
+                        </div>
+                        <div className="lg:col-span-1">
+                            <input name="model" placeholder="Model" value={formData.model} onChange={handleInputChange} required className={inputClasses} />
+                        </div>
+                        <div className="lg:col-span-1">
+                            <input name="category" placeholder="Category" value={formData.category} onChange={handleInputChange} required className={inputClasses} />
+                        </div>
+                        <div className="lg:col-span-1">
+                            <input name="price" type="number" placeholder="Price" value={formData.price || ''} onChange={handleInputChange} required className={inputClasses} />
+                        </div>
+                        <div className="lg:col-span-1">
+                            <input name="quantity" type="number" placeholder="Quantity" value={formData.quantity || ''} onChange={handleInputChange} required className={inputClasses} />
+                        </div>
+                        <div className="lg:col-span-1">
+                            <button type="submit" className="w-full rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-green-700 active:scale-[0.98]">
+                                {editingId ? 'Save Changes' : 'Add Vehicle'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <VehicleSearch onSearch={handleSearch} />
+
+                <div className="flex flex-col gap-4">
+                    {vehicles.length === 0 && !loading && (
+                        <div className="rounded-xl border border-dashed border-slate-300 py-12 text-center text-slate-500">
+                            No vehicles found matching your criteria.
+                        </div>
+                    )}
+                    {vehicles.map((v) => (
+                        <div key={v.id} className="group flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md lg:flex-row lg:items-center lg:justify-between">
+                            <div className="flex flex-col">
+                                <div className="flex items-center gap-3">
+                                    <h3 className="text-lg font-bold text-slate-900">{v.make} {v.model}</h3>
+                                    <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">{v.category}</span>
+                                </div>
+                                <div className="mt-1 flex items-center gap-4 text-sm text-slate-500">
+                                    <span className="font-semibold text-slate-700">${v.price.toLocaleString()}</span>
+                                    <span>•</span>
+                                    <span className={v.quantity === 0 ? "text-red-500 font-medium" : ""}>Stock: {v.quantity}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-3">
+                                <div className="flex items-center">
+                                    <input
+                                        type="number"
+                                        placeholder="Qty"
+                                        value={restockAmounts[v.id] || ''}
+                                        onChange={(e) => setRestockAmounts(prev => ({ ...prev, [v.id]: e.target.value }))}
+                                        className="h-9 w-20 rounded-l-lg border border-slate-300 bg-slate-50 px-3 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                    />
+                                    <button
+                                        onClick={() => handleRestockSubmit(v.id)}
+                                        className="h-9 rounded-r-lg border border-transparent bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+                                    >
+                                        Restock
+                                    </button>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => { setEditingId(v.id); const { id: _, ...rest } = v; setFormData(rest); }}
+                                        className="h-9 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(v.id)}
+                                        className="h-9 rounded-lg bg-red-50 px-4 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );

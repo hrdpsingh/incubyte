@@ -51,34 +51,55 @@ export default function Dashboard({ token, isAdmin, logout, navigate }: Dashboar
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-8">
-            <div className="mb-8 flex justify-between items-center">
-                <h1 className="text-3xl font-bold">Inventory</h1>
-                <div className="flex gap-2">
-                    {isAdmin && (
-                        <button onClick={() => navigate("admin")} className="rounded bg-gray-800 px-4 py-2 text-white">
-                            Admin Panel
+        <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+            <div className="mx-auto max-w-6xl">
+                <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Vehicle Inventory</h1>
+                        <p className="mt-1 text-sm text-slate-500">Browse and purchase available vehicles.</p>
+                    </div>
+                    <div className="flex gap-3">
+                        {isAdmin && (
+                            <button
+                                onClick={() => navigate("admin")}
+                                className="rounded-lg bg-slate-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-700"
+                            >
+                                Admin Panel
+                            </button>
+                        )}
+                        <button
+                            onClick={logout}
+                            className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 transition-colors hover:bg-slate-50"
+                        >
+                            Logout
                         </button>
-                    )}
-                    <button onClick={logout} className="rounded bg-red-500 px-4 py-2 text-white">
-                        Logout
-                    </button>
+                    </div>
                 </div>
+
+                <VehicleSearch onSearch={handleSearch} />
+
+                {error && (
+                    <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
+                        {error}
+                    </div>
+                )}
+
+                {!error && vehicles.length === 0 ? (
+                    <div className="mt-12 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 py-16">
+                        <svg className="mb-4 h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        <h3 className="text-lg font-medium text-slate-900">No vehicles available</h3>
+                        <p className="mt-1 text-slate-500">Try adjusting your search criteria.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {vehicles.map((vehicle) => (
+                            <VehicleCard key={vehicle.id} vehicle={vehicle} onPurchase={purchaseVehicle} />
+                        ))}
+                    </div>
+                )}
             </div>
-
-            <VehicleSearch onSearch={handleSearch} />
-
-            {error && <p className="mb-4 text-red-600">{error}</p>}
-
-            {!error && vehicles.length === 0 ? (
-                <p>No vehicles available</p>
-            ) : (
-                <div className="grid gap-6 md:grid-cols-3">
-                    {vehicles.map((vehicle) => (
-                        <VehicleCard key={vehicle.id} vehicle={vehicle} onPurchase={purchaseVehicle} />
-                    ))}
-                </div>
-            )}
         </div>
     );
 }

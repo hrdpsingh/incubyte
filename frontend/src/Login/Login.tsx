@@ -36,9 +36,10 @@ export default function Login({ setToken, setIsAdmin, navigate }: LoginProps) {
 
     return (
         <AuthForm
-            title="Dealership Login"
+            title="Welcome Back"
+            subtitle="Sign in to access the dealership"
             error={error}
-            submitLabel="Login"
+            submitLabel="Sign In"
             switchText="Don't have an account?"
             switchActionLabel="Register"
             onSwitch={() => navigate("register")}

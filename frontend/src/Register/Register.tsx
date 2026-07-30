@@ -35,13 +35,14 @@ export default function Register({ navigate }: RegisterProps) {
 
     return (
         <AuthForm
-            title="Create Account"
+            title="Create an Account"
+            subtitle="Join the dealership network today"
             error={error}
             success={success}
-            submitLabel="Register"
-            submitClassName="bg-green-600 hover:bg-green-700"
+            submitLabel="Register Account"
+            submitClassName="bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500/50"
             switchText="Already have an account?"
-            switchActionLabel="Login"
+            switchActionLabel="Sign in"
             onSwitch={() => navigate("login")}
             onSubmit={handleSubmit}
         />

@@ -47,7 +47,7 @@ describe("Dashboard", () => {
         renderDashboard();
 
         expect(await loadVehicle()).toBeInTheDocument();
-        expect(screen.getByText("Stock: 5")).toBeInTheDocument();
+        expect(screen.getByText("5 Available")).toBeInTheDocument();
     });
 
     test("shows a message when no vehicles are available", async () => {
@@ -89,12 +89,12 @@ describe("Dashboard", () => {
         await loadVehicle();
 
         await userEvent.type(
-            screen.getByPlaceholderText(/Search Make/i),
+            screen.getByPlaceholderText("e.g. Toyota"),
             "Toyota",
         );
 
         await userEvent.type(
-            screen.getByPlaceholderText(/Search Model/i),
+            screen.getByPlaceholderText("e.g. Camry"),
             "Camry",
         );
 
@@ -156,7 +156,7 @@ describe("Dashboard", () => {
             ),
         );
 
-        expect(await screen.findByText("Stock: 4")).toBeInTheDocument();
+        expect(await screen.findByText("4 Available")).toBeInTheDocument();
         expect(fetch).toHaveBeenCalledTimes(3);
     });
 

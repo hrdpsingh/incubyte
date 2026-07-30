@@ -48,7 +48,7 @@ test("logs in successfully", async () => {
 
     await user.click(
         screen.getByRole("button", {
-            name: /login/i,
+            name: /sign in/i,
         })
     );
 
