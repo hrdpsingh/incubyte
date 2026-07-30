@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface Vehicle {
     id: number;
@@ -21,10 +21,35 @@ export default function Dashboard({
     logout,
 }: DashboardProps) {
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+    const [make, setMake] = useState("");
+    const [error, setError] = useState("");
 
     const fetchVehicles = useCallback(async () => {
+        setError("");
+
+        const response = await fetch(`${API}/api/vehicles`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            setError("Failed to load vehicles");
+            return;
+        }
+
+        setVehicles(await response.json());
+    }, [token]);
+
+    useEffect(() => {
+        fetchVehicles();
+    }, [fetchVehicles]);
+
+    async function search() {
+        setError("");
+
         const response = await fetch(
-            `${API}/api/vehicles`,
+            `${API}/api/vehicles/search?make=${encodeURIComponent(make)}`,
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -32,16 +57,17 @@ export default function Dashboard({
             },
         );
 
-        if (response.ok) {
-            setVehicles(await response.json());
+        if (!response.ok) {
+            setError("Failed to load vehicles");
+            return;
         }
-    }, [token]);
 
-    useEffect(() => {
-        fetchVehicles();
-    }, [fetchVehicles]);
+        setVehicles(await response.json());
+    }
 
     async function purchase(id: number) {
+        setError("");
+
         const response = await fetch(
             `${API}/api/vehicles/${id}/purchase`,
             {
@@ -52,11 +78,14 @@ export default function Dashboard({
             },
         );
 
-        if (response.ok) {
-            fetchVehicles();
-        } else {
-            alert("Vehicle is unavailable.");
+        if (!response.ok) {
+            const data = await response.json();
+            setError(data.detail ?? "Vehicle is unavailable");
+            return;
         }
+
+        await response.json();
+        await fetchVehicles();
     }
 
     return (
@@ -74,44 +103,69 @@ export default function Dashboard({
                 </button>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3">
-                {vehicles.map((vehicle) => (
-                    <div
-                        key={vehicle.id}
-                        className="rounded-lg border bg-white p-4 shadow"
-                    >
-                        <h2 className="text-xl font-bold">
-                            {vehicle.make} {vehicle.model}
-                        </h2>
+            <div className="mb-6 flex gap-2">
+                <input
+                    type="text"
+                    placeholder="Make"
+                    value={make}
+                    onChange={(e) => setMake(e.target.value)}
+                    className="rounded border px-3 py-2"
+                />
 
-                        <p>
-                            Category: {vehicle.category}
-                        </p>
-
-                        <p className="font-semibold text-green-600">
-                            ${vehicle.price}
-                        </p>
-
-                        <p>
-                            Stock: {vehicle.quantity}
-                        </p>
-
-                        <button
-                            disabled={
-                                vehicle.quantity === 0
-                            }
-                            onClick={() =>
-                                purchase(vehicle.id)
-                            }
-                            className="mt-4 w-full rounded bg-blue-600 p-2 text-white disabled:bg-gray-400"
-                        >
-                            {vehicle.quantity === 0
-                                ? "Out of Stock"
-                                : "Purchase"}
-                        </button>
-                    </div>
-                ))}
+                <button
+                    onClick={search}
+                    className="rounded bg-blue-600 px-4 py-2 text-white"
+                >
+                    Search
+                </button>
             </div>
+
+            {error && (
+                <p className="mb-4 text-red-600">
+                    {error}
+                </p>
+            )}
+
+            {!error && vehicles.length === 0 ? (
+                <p>No vehicles available</p>
+            ) : (
+                <div className="grid gap-6 md:grid-cols-3">
+                    {vehicles.map((vehicle) => (
+                        <div
+                            key={vehicle.id}
+                            className="rounded-lg border bg-white p-4 shadow"
+                        >
+                            <h2 className="text-xl font-bold">
+                                {vehicle.make} {vehicle.model}
+                            </h2>
+
+                            <p>
+                                Category: {vehicle.category}
+                            </p>
+
+                            <p className="font-semibold text-green-600">
+                                ${vehicle.price}
+                            </p>
+
+                            <p>
+                                Stock: {vehicle.quantity}
+                            </p>
+
+                            <button
+                                disabled={vehicle.quantity === 0}
+                                onClick={() =>
+                                    purchase(vehicle.id)
+                                }
+                                className="mt-4 w-full rounded bg-blue-600 p-2 text-white disabled:bg-gray-400"
+                            >
+                                {vehicle.quantity === 0
+                                    ? "Out of Stock"
+                                    : "Purchase"}
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
