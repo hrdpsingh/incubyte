@@ -1,11 +1,17 @@
+import os
 from typing import Annotated
 
+from dotenv import load_dotenv
 from fastapi import Depends
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
+load_dotenv()
+
+url = os.getenv("DATABASE_URL", "sqlite:///dealership.db")
+
 engine = create_engine(
-    "sqlite:///./dealership.db",
+    url,
     connect_args={"check_same_thread": False},
 )
 
