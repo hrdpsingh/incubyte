@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Screen } from '../App';
+import type { Screen } from "../App";
 
 interface Vehicle {
     id: number;
@@ -12,6 +12,7 @@ interface Vehicle {
 
 interface DashboardProps {
     token: string;
+    isAdmin: boolean;
     logout: () => void;
     navigate: (screen: Screen) => void;
 }
@@ -54,6 +55,7 @@ function VehicleCard({
 
 export default function Dashboard({
     token,
+    isAdmin,
     logout,
     navigate,
 }: DashboardProps) {
@@ -137,12 +139,15 @@ export default function Dashboard({
                 </h1>
 
                 <div className="flex gap-2">
-                    <button
-                        onClick={() => navigate("admin")}
-                        className="rounded bg-gray-800 px-4 py-2 text-white"
-                    >
-                        Admin Panel
-                    </button>
+                    {isAdmin && (
+                        <button
+                            onClick={() => navigate("admin")}
+                            className="rounded bg-gray-800 px-4 py-2 text-white"
+                        >
+                            Admin Panel
+                        </button>
+                    )}
+
                     <button
                         onClick={logout}
                         className="rounded bg-red-500 px-4 py-2 text-white"

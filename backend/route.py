@@ -93,7 +93,7 @@ def get_vehicle(vehicle_id: int, database: DatabaseSession) -> Vehicle:
     )
 
 
-VehicleDep = Annotated[Vehicle, Depends(get_vehicle)]
+VehicleDependency = Annotated[Vehicle, Depends(get_vehicle)]
 
 
 @router.post("/api/auth/register", status_code=status.HTTP_201_CREATED, tags=["auth"])
@@ -126,6 +126,7 @@ def login(payload: LoginRequest, database: DatabaseSession):
         "access_token": create_access_token({"sub": user.username}),
         "token_type": "bearer",
         "expires_in_seconds": TOKEN_EXPIRE_MINUTES * 60,
+        "is_admin": user.is_admin,
     }
 
 
@@ -134,7 +135,7 @@ def login(payload: LoginRequest, database: DatabaseSession):
     response_model=VehicleResponse,
     status_code=status.HTTP_201_CREATED,
     tags=["vehicles"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(get_admin_user)],
 )
 def create_vehicle(vehicle: VehicleCreate, database: DatabaseSession):
     database_vehicle = Vehicle(**vehicle.model_dump())
@@ -187,11 +188,11 @@ def search_vehicles(
     "/api/vehicles/{vehicle_id}",
     response_model=VehicleResponse,
     tags=["vehicles"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(get_admin_user)],
 )
 def update_vehicle(
     vehicle_update: VehicleUpdate,
-    vehicle: VehicleDep,
+    vehicle: VehicleDependency,
     database: DatabaseSession,
 ):
     for key, value in vehicle_update.model_dump(exclude_unset=True).items():
@@ -208,7 +209,7 @@ def update_vehicle(
     tags=["vehicles"],
     dependencies=[Depends(get_admin_user)],
 )
-def delete_vehicle(vehicle: VehicleDep, database: DatabaseSession):
+def delete_vehicle(vehicle: VehicleDependency, database: DatabaseSession):
     database.delete(vehicle)
     database.commit()
 
@@ -219,7 +220,7 @@ def delete_vehicle(vehicle: VehicleDep, database: DatabaseSession):
     tags=["inventory"],
     dependencies=[Depends(get_current_user)],
 )
-def purchase_vehicle(vehicle: VehicleDep, database: DatabaseSession):
+def purchase_vehicle(vehicle: VehicleDependency, database: DatabaseSession):
     if vehicle.quantity <= 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -240,7 +241,7 @@ def purchase_vehicle(vehicle: VehicleDep, database: DatabaseSession):
 )
 def restock_vehicle(
     body: RestockRequest,
-    vehicle: VehicleDep,
+    vehicle: VehicleDependency,
     database: DatabaseSession,
 ):
     vehicle.quantity += body.quantity

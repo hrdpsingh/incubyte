@@ -105,19 +105,28 @@ class TestUserLogin:
 
 
 class TestVehicleManagement:
-    def test_create_vehicle(self, authentication_headers):
-        vehicle = create_vehicle(authentication_headers)
+    def test_create_vehicle(self, admin_authentication_headers):
+        vehicle = create_vehicle(admin_authentication_headers)
         assert vehicle["make"] == "Toyota"
         assert vehicle["quantity"] == 5
 
-    def test_list_vehicles(self, authentication_headers):
-        create_vehicle(authentication_headers)
+    def test_create_vehicle_non_admin_forbidden(self, authentication_headers):
+        payload = {**DEFAULT_VEHICLE, "quantity": 5}
+        response = client.post(
+            "/api/vehicles", headers=authentication_headers, json=payload
+        )
+        assert response.status_code == 403
+
+    def test_list_vehicles(self, authentication_headers, admin_authentication_headers):
+        create_vehicle(admin_authentication_headers)
         response = client.get("/api/vehicles", headers=authentication_headers)
         assert response.status_code == 200
         assert len(response.json()) == 1
 
-    def test_search_vehicles(self, authentication_headers):
-        create_vehicle(authentication_headers)
+    def test_search_vehicles(
+        self, authentication_headers, admin_authentication_headers
+    ):
+        create_vehicle(admin_authentication_headers)
         response = client.get(
             "/api/vehicles/search",
             headers=authentication_headers,
@@ -126,11 +135,11 @@ class TestVehicleManagement:
         assert response.status_code == 200
         assert len(response.json()) == 1
 
-    def test_update_vehicle(self, authentication_headers):
-        vehicle = create_vehicle(authentication_headers)
+    def test_update_vehicle(self, admin_authentication_headers):
+        vehicle = create_vehicle(admin_authentication_headers)
         response = client.put(
             f"/api/vehicles/{vehicle['id']}",
-            headers=authentication_headers,
+            headers=admin_authentication_headers,
             json={
                 "make": "Honda",
                 "model": "Civic",
@@ -141,6 +150,17 @@ class TestVehicleManagement:
         )
         assert response.status_code == 200
         assert response.json()["make"] == "Honda"
+
+    def test_update_vehicle_non_admin_forbidden(
+        self, authentication_headers, admin_authentication_headers
+    ):
+        vehicle = create_vehicle(admin_authentication_headers)
+        response = client.put(
+            f"/api/vehicles/{vehicle['id']}",
+            headers=authentication_headers,
+            json={"make": "Honda"},
+        )
+        assert response.status_code == 403
 
     def test_delete_vehicle(self, admin_authentication_headers):
         vehicle = create_vehicle(admin_authentication_headers)
@@ -156,8 +176,10 @@ class TestVehicleManagement:
 
 
 class TestInventoryPurchases:
-    def test_purchase_vehicle_success(self, authentication_headers):
-        vehicle = create_vehicle(authentication_headers, quantity=5)
+    def test_purchase_vehicle_success(
+        self, authentication_headers, admin_authentication_headers
+    ):
+        vehicle = create_vehicle(admin_authentication_headers, quantity=5)
 
         response = client.post(
             f"/api/vehicles/{vehicle['id']}/purchase",
@@ -166,8 +188,10 @@ class TestInventoryPurchases:
         assert response.status_code == 200
         assert response.json()["quantity"] == 4
 
-    def test_purchase_vehicle_when_quantity_is_zero(self, authentication_headers):
-        vehicle = create_vehicle(authentication_headers, quantity=0)
+    def test_purchase_vehicle_when_quantity_is_zero(
+        self, authentication_headers, admin_authentication_headers
+    ):
+        vehicle = create_vehicle(admin_authentication_headers, quantity=0)
 
         response = client.post(
             f"/api/vehicles/{vehicle['id']}/purchase",

@@ -22,6 +22,7 @@ const mockResponse = (data: unknown, ok = true, status = 200) => ({
 
 const defaultProps = {
     token,
+    isAdmin: false,
     logout: vi.fn(),
     navigate: vi.fn(),
 };
@@ -202,5 +203,43 @@ describe("Dashboard", () => {
                 }),
             }),
         );
+    });
+
+    test("does not show the admin panel button for regular users", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockResolvedValue(mockResponse([vehicle])),
+        );
+
+        renderDashboard({
+            isAdmin: false,
+        });
+
+        await loadVehicle();
+
+        expect(
+            screen.queryByRole("button", {
+                name: /admin panel/i,
+            }),
+        ).not.toBeInTheDocument();
+    });
+
+    test("shows the admin panel button for admins", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockResolvedValue(mockResponse([vehicle])),
+        );
+
+        renderDashboard({
+            isAdmin: true,
+        });
+
+        await loadVehicle();
+
+        expect(
+            screen.getByRole("button", {
+                name: /admin panel/i,
+            }),
+        ).toBeInTheDocument();
     });
 });

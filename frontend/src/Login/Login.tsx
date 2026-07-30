@@ -4,6 +4,7 @@ type Screen = "login" | "register";
 
 interface LoginProps {
     setToken: (token: string) => void;
+    setIsAdmin: (isAdmin: boolean) => void;
     navigate: (screen: Screen) => void;
 }
 
@@ -11,6 +12,7 @@ const API = import.meta.env.VITE_API_URL;
 
 export default function Login({
     setToken,
+    setIsAdmin,
     navigate,
 }: LoginProps) {
     const [username, setUsername] =
@@ -53,6 +55,7 @@ export default function Login({
             const data = await response.json();
 
             setToken(data.access_token);
+            setIsAdmin(data.is_admin);
         } catch {
             setError(
                 "Unable to contact server."
