@@ -11,8 +11,14 @@ const STEP = 1000;
 
 export default function VehicleSearch({ onSearch }: VehicleSearchProps) {
     const [query, setQuery] = useState("");
-    const [minPrice, setMinPrice] = useState(ABSOLUTE_MIN);
-    const [maxPrice, setMaxPrice] = useState(ABSOLUTE_MAX);
+
+    // Store exact thumb physical values independently
+    const [val1, setVal1] = useState(ABSOLUTE_MIN);
+    const [val2, setVal2] = useState(ABSOLUTE_MAX);
+
+    // Derive semantic min/max on the fly to eliminate jittering and bounds fighting
+    const minPrice = Math.min(val1, val2);
+    const maxPrice = Math.max(val1, val2);
 
     const handleSearch = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -21,14 +27,6 @@ export default function VehicleSearch({ onSearch }: VehicleSearchProps) {
             minPrice: minPrice > ABSOLUTE_MIN ? String(minPrice) : "",
             maxPrice: maxPrice < ABSOLUTE_MAX ? String(maxPrice) : "",
         });
-    };
-
-    const handleMinChange = (value: number) => {
-        setMinPrice(Math.min(value, maxPrice - STEP));
-    };
-
-    const handleMaxChange = (value: number) => {
-        setMaxPrice(Math.max(value, minPrice + STEP));
     };
 
     const formatPrice = (value: number) =>
@@ -77,24 +75,29 @@ export default function VehicleSearch({ onSearch }: VehicleSearchProps) {
                             {formatPrice(minPrice)} – {maxPrice >= ABSOLUTE_MAX ? `${formatPrice(ABSOLUTE_MAX)}+` : formatPrice(maxPrice)}
                         </span>
                     </div>
-                    <div className="relative flex h-7 items-center px-1">
-                        {/* Track */}
-                        <div className="absolute left-1 right-1 h-1.5 rounded-full bg-slate-200" />
-                        {/* Active range */}
+                    {/* Replaced 'px-1' with absolute left-0 positioning to ensure accurate pixel perfect alignments without thumb offset clipping */}
+                    <div className="relative flex h-7 w-full items-center">
+                        {/* Background Track */}
+                        <div className="absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-slate-200" />
+
+                        {/* Active range (Corrected mathematical precision accounting exactly for 20px thumb widths) */}
                         <div
-                            className="absolute h-1.5 rounded-full bg-blue-500"
-                            style={{ left: `calc(${minPct}% * 0.98 / 100 * 100% + 0.25rem)`, width: `${maxPct - minPct}%` }}
+                            className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-blue-500"
+                            style={{
+                                left: `calc(${minPct}% + ${10 - minPct * 0.2}px)`,
+                                width: `calc(${maxPct - minPct}% - ${(maxPct - minPct) * 0.2}px)`
+                            }}
                         />
                         <input
                             type="range"
                             min={ABSOLUTE_MIN}
                             max={ABSOLUTE_MAX}
                             step={STEP}
-                            value={minPrice}
-                            onChange={(e) => handleMinChange(Number(e.target.value))}
-                            className="range-thumb pointer-events-none absolute w-full appearance-none bg-transparent"
+                            value={val1}
+                            onChange={(e) => setVal1(Number(e.target.value))}
+                            className="range-thumb pointer-events-none absolute left-0 w-full appearance-none bg-transparent"
                             style={{
-                                zIndex: minPrice > ABSOLUTE_MAX - STEP * 5 ? 5 : 3,
+                                zIndex: 3,
                                 height: "20px",
                                 top: "50%",
                                 transform: "translateY(-50%)",
@@ -105,9 +108,9 @@ export default function VehicleSearch({ onSearch }: VehicleSearchProps) {
                             min={ABSOLUTE_MIN}
                             max={ABSOLUTE_MAX}
                             step={STEP}
-                            value={maxPrice}
-                            onChange={(e) => handleMaxChange(Number(e.target.value))}
-                            className="range-thumb pointer-events-none absolute w-full appearance-none bg-transparent"
+                            value={val2}
+                            onChange={(e) => setVal2(Number(e.target.value))}
+                            className="range-thumb pointer-events-none absolute left-0 w-full appearance-none bg-transparent"
                             style={{
                                 zIndex: 4,
                                 height: "20px",
