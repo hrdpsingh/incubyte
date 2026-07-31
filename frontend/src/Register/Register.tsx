@@ -7,15 +7,23 @@ interface RegisterProps {
     navigate: (screen: Screen) => void;
 }
 
+interface FormState {
+    error: string;
+    success: string;
+    isLoading: boolean;
+}
+
+const INITIAL_STATE: FormState = {
+    error: "",
+    success: "",
+    isLoading: false,
+};
+
 export default function Register({ navigate }: RegisterProps) {
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
+    const [formState, setFormState] = useState<FormState>(INITIAL_STATE);
 
     async function handleSubmit(username: string, password: string) {
-        setError("");
-        setSuccess("");
-        setIsLoading(true);
+        setFormState({ error: "", success: "", isLoading: true });
 
         try {
             const response = await fetch(`${API}/api/auth/register`, {
@@ -25,16 +33,15 @@ export default function Register({ navigate }: RegisterProps) {
             });
 
             if (!response.ok) {
-                setError(await extractError(response, "Registration failed."));
+                const errorMessage = await extractError(response, "Registration failed.");
+                setFormState({ error: errorMessage, success: "", isLoading: false });
                 return;
             }
 
-            setSuccess("Registration successful!");
+            setFormState({ error: "", success: "Registration successful!", isLoading: false });
             navigate("login");
         } catch {
-            setError("Unable to contact server.");
-        } finally {
-            setIsLoading(false);
+            setFormState({ error: "Unable to contact server.", success: "", isLoading: false });
         }
     }
 
@@ -42,9 +49,9 @@ export default function Register({ navigate }: RegisterProps) {
         <AuthForm
             title="Create an Account"
             subtitle="Join the dealership network today"
-            error={error}
-            success={success}
-            isLoading={isLoading}
+            error={formState.error}
+            success={formState.success}
+            isLoading={formState.isLoading}
             submitLabel="Register Account"
             submitClassName="bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500/50"
             switchText="Already have an account?"

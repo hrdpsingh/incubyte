@@ -9,6 +9,25 @@ interface LoginProps {
     navigate: (screen: Screen) => void;
 }
 
+interface LoginResponse {
+    access_token: string;
+    is_admin?: boolean;
+}
+
+async function loginUser(username: string, password: string): Promise<LoginResponse> {
+    const response = await fetch(`${API}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+    });
+
+    if (!response.ok) {
+        throw new Error("Invalid credentials");
+    }
+
+    return response.json();
+}
+
 export default function Login({ setToken, setIsAdmin, navigate }: LoginProps) {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -18,22 +37,14 @@ export default function Login({ setToken, setIsAdmin, navigate }: LoginProps) {
         setIsLoading(true);
 
         try {
-            const response = await fetch(`${API}/api/auth/login`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password }),
-            });
-
-            if (!response.ok) {
-                setError("Invalid credentials");
-                return;
-            }
-
-            const data = await response.json();
+            const data = await loginUser(username, password);
             setToken(data.access_token);
-            setIsAdmin(data.is_admin);
-        } catch {
-            setError("Unable to contact server.");
+            setIsAdmin(Boolean(data.is_admin));
+        } catch (err) {
+            const message = err instanceof Error && err.message === "Invalid credentials"
+                ? err.message
+                : "Unable to contact server.";
+            setError(message);
         } finally {
             setIsLoading(false);
         }

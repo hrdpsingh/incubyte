@@ -17,7 +17,7 @@ Password: 123
 
 This project implements:
 
-- **Backend API** (FastAPI + SQLite via SQLAlchemy) exposing authentication and vehicle/inventory endpoints, secured with JWT-based authentication and admin-only route protection.
+- **Backend API** (FastAPI + SQLite(development) + Postgres(deployment) via SQLAlchemy) exposing authentication and vehicle/inventory endpoints, secured with JWT-based authentication and admin-only route protection.
 - **Frontend SPA** (React + TypeScript + Tailwind CSS) with registration, login, a public/user dashboard for browsing and purchasing vehicles, and an admin panel for managing inventory.
 - **Test suites** on both sides (pytest for the backend, Vitest + React Testing Library for the frontend).
 
@@ -25,7 +25,7 @@ This project implements:
 
 | Layer    | Technology |
 |----------|------------|
-| Backend  | Python, FastAPI, SQLAlchemy, SQLite, PyJWT, bcrypt |
+| Backend  | Python, FastAPI, SQLAlchemy, SQLite, Postgres, PyJWT, bcrypt |
 | Frontend | React, TypeScript, Vite, Tailwind CSS |
 | Testing  | pytest (backend), Vitest + Testing Library (frontend) |
 
@@ -141,7 +141,7 @@ npm run test
 - Used it to identify what test cases were missing for both the authentication and vehicle endpoints, and to reduce duplication across test setup.
 - Asked for a review pass to scan the codebase for issues and to check the backend and frontend against the kata's stated requirements before considering them complete.
 - On the frontend, used it to work out Tailwind setup/dependencies, how to structure components and their tests, how to guard the admin dashboard route from non-admin access, and how to cut down repetition in the UI code.
-- Used it to generate Conventional Commits-style commit messages summarizing changes I'd made.
+- Used it to generate Conventional Commits-style commit messages summarizing changes I have made.
 
 ### Reflection
 

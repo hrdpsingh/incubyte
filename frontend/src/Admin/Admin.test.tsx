@@ -77,7 +77,6 @@ describe("Admin", () => {
         await userEvent.type(screen.getByPlaceholderText("Price"), "25000");
         await userEvent.type(screen.getByPlaceholderText("Quantity"), "5");
 
-        // Updated to reflect the new UI button text "Add Vehicle"
         await userEvent.click(screen.getByRole("button", { name: /add vehicle/i }));
 
         expect(globalThis.fetch).toHaveBeenCalledWith(
@@ -122,7 +121,6 @@ describe("Admin", () => {
 
         expect(screen.getByDisplayValue("Toyota")).toBeInTheDocument();
         expect(screen.getByDisplayValue("Camry")).toBeInTheDocument();
-        // The new UI uses "Save Changes", which is covered by /save/i
         expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     });
 
