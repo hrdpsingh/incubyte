@@ -1,39 +1,20 @@
-from database import Base
-from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import Boolean, Float, Integer
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlmodel import Field, SQLModel
 
 
-class User(Base):
+class User(SQLModel, table=True):
+    """Database model representing a user account in the system."""
+
     __tablename__ = "users"
 
-    username: Mapped[str] = mapped_column(primary_key=True, unique=True, index=True)
-    password_hash: Mapped[str]
-    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
-
-
-class RegisterRequest(BaseModel):
+    id: int | None = Field(default=None, primary_key=True)
     username: str
-    password: str
+    password_hash: str
+    is_admin: bool = False
 
 
-class LoginRequest(BaseModel):
-    username: str
-    password: str
+class VehicleBase(SQLModel):
+    """Base model defining core vehicle properties shared across schemas."""
 
-
-class Vehicle(Base):
-    __tablename__ = "vehicles"
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    make: Mapped[str]
-    model: Mapped[str]
-    category: Mapped[str]
-    price: Mapped[float] = mapped_column(Float)
-    quantity: Mapped[int] = mapped_column(Integer)
-
-
-class VehicleCreate(BaseModel):
     make: str
     model: str
     category: str
@@ -41,7 +22,21 @@ class VehicleCreate(BaseModel):
     quantity: int
 
 
-class VehicleUpdate(BaseModel):
+class Vehicle(VehicleBase, table=True):
+    """Database model representing a vehicle record in the inventory."""
+
+    __tablename__ = "vehicles"
+
+    id: int | None = Field(default=None, primary_key=True)
+
+
+class VehicleCreate(VehicleBase):
+    """Schema for creating a new vehicle record."""
+
+
+class VehicleUpdate(SQLModel):
+    """Schema for updating vehicle details with all optional fields."""
+
     make: str | None = None
     model: str | None = None
     category: str | None = None
@@ -49,16 +44,20 @@ class VehicleUpdate(BaseModel):
     quantity: int | None = None
 
 
-class VehicleResponse(BaseModel):
+class VehicleResponse(VehicleBase):
+    """Schema for returning full vehicle information including its ID."""
+
     id: int
-    make: str
-    model: str
-    category: str
-    price: float
-    quantity: int
-
-    model_config = ConfigDict(from_attributes=True)
 
 
-class RestockRequest(BaseModel):
+class AuthenticationRequest(SQLModel):
+    """Schema for user login credentials payload."""
+
+    username: str
+    password: str
+
+
+class RestockRequest(SQLModel):
+    """Schema for inventory restock requests with quantity validation."""
+
     quantity: int = Field(gt=0)

@@ -1,36 +1,23 @@
 import os
+from collections.abc import Generator
 from typing import Annotated
 
 from dotenv import load_dotenv
 from fastapi import Depends
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, declarative_base, sessionmaker
+from sqlmodel import Session, create_engine
 
 load_dotenv()
 
 url = os.getenv("DATABASE_URL", "sqlite:///dealership.db")
 
-connection_arguments = {}
-if url.startswith("sqlite"):
-    connection_arguments["check_same_thread"] = False
-
-engine = create_engine(url, connect_args=connection_arguments)
-
-LocalSession = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-)
-
-Base = declarative_base()
+arguments = {"check_same_thread": False} if url.startswith("sqlite") else {}
+engine = create_engine(url, connect_args=arguments)
 
 
-def get_database():
-    database = LocalSession()
-    try:
-        yield database
-    finally:
-        database.close()
+def get_session() -> Generator[Session, None, None]:
+    """Provide a transactional database session for requests."""
+    with Session(engine) as session:
+        yield session
 
 
-DatabaseSession = Annotated[Session, Depends(get_database)]
+Database = Annotated[Session, Depends(get_session)]

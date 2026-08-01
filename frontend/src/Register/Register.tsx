@@ -26,7 +26,7 @@ export default function Register({ navigate }: RegisterProps) {
         setFormState({ error: "", success: "", isLoading: true });
 
         try {
-            const response = await fetch(`${API}/api/auth/register`, {
+            const response = await fetch(`${API}/api/authentication/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password }),
