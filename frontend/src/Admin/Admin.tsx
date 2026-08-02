@@ -6,11 +6,13 @@ import DashboardLayout from '../Components/DashboardLayout';
 import ErrorAlert from '../Components/ErrorAlert';
 import { useVehicles } from '../useVehicles';
 
+// Props definition for the main Admin dashboard component
 interface AdminProps {
     token: string;
     navigate: (screen: Screen) => void;
 }
 
+// Initial state object for clearing or initializing the vehicle form
 const EMPTY_FORM: VehicleFormData = {
     make: '',
     model: '',
@@ -19,9 +21,11 @@ const EMPTY_FORM: VehicleFormData = {
     quantity: 0,
 };
 
+// Reusable Tailwind CSS utility classes for input fields
 const INPUT_CLASSES =
     "w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20";
 
+// Sends API request to create a new vehicle or update an existing one
 const saveVehicleApi = async (headers: HeadersInit, formData: VehicleFormData, editingId: number | null): Promise<void> => {
     const payload = { ...formData, price: Number(formData.price), quantity: Number(formData.quantity) };
     const url = editingId ? `${API}/api/vehicles/${editingId}` : `${API}/api/vehicles`;
@@ -33,11 +37,13 @@ const saveVehicleApi = async (headers: HeadersInit, formData: VehicleFormData, e
     if (!res.ok) throw new Error(await extractError(res, 'Action failed. (Are you an admin?)'));
 };
 
+// Sends API request to remove a vehicle entry by ID
 const deleteVehicleApi = async (headers: HeadersInit, id: number): Promise<void> => {
     const res = await fetch(`${API}/api/vehicles/${id}`, { method: 'DELETE', headers });
     if (!res.ok) throw new Error(await extractError(res));
 };
 
+// Sends API request to increase the available inventory stock for a vehicle
 const restockVehicleApi = async (headers: HeadersInit, id: number, amount: number): Promise<void> => {
     const res = await fetch(`${API}/api/vehicles/${id}/restock`, {
         method: 'POST',
@@ -47,10 +53,15 @@ const restockVehicleApi = async (headers: HeadersInit, id: number, amount: numbe
     if (!res.ok) throw new Error(await extractError(res));
 };
 
+// Main container component for managing vehicle inventory
 const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
+    // Form state for creating and updating vehicles
     const [formData, setFormData] = useState<VehicleFormData>(EMPTY_FORM);
+
+    // Tracks the current vehicle ID being edited (null when adding new)
     const [editingId, setEditingId] = useState<number | null>(null);
 
+    // Memoizes HTTP authorization headers to prevent unnecessary re-renders
     const headers = useMemo(
         () => ({
             'Content-Type': 'application/json',
@@ -59,8 +70,10 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
         [token]
     );
 
+    // Custom hook for fetching, searching, and managing vehicle data
     const { vehicles, loading, error, setError, handleSearch, refetch } = useVehicles(headers);
 
+    // Syncs form input changes with local component state
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type } = e.target;
         setFormData((prev) => ({
@@ -69,6 +82,7 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
         }));
     };
 
+    // Handles form submission for both creation and modification
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -81,6 +95,7 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
         }
     };
 
+    // Triggers vehicle deletion and re-fetches updated list
     const handleDelete = async (id: number) => {
         try {
             await deleteVehicleApi(headers, id);
@@ -90,6 +105,7 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
         }
     };
 
+    // Submits restock quantity updates to the backend
     const handleRestockSubmit = async (id: number, amount: number) => {
         try {
             await restockVehicleApi(headers, id, amount);
@@ -99,12 +115,14 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
         }
     };
 
+    // Populates the form fields with existing vehicle data for editing
     const handleStartEdit = (vehicle: Vehicle) => {
         setEditingId(vehicle.id);
         const { id: _, ...rest } = vehicle;
         setFormData(rest);
     };
 
+    // Renders full-screen loading fallback state
     if (loading) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 text-center">
@@ -117,6 +135,7 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
 
     return (
         <DashboardLayout>
+            {/* Dashboard Header and Back Navigation */}
             <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
@@ -134,8 +153,10 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
                 </button>
             </div>
 
+            {/* Error banner notification */}
             {error && <ErrorAlert message={error} />}
 
+            {/* Vehicle creation and edit form section */}
             <VehicleForm
                 editingId={editingId}
                 formData={formData}
@@ -143,14 +164,18 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
                 onSubmit={handleSubmit}
             />
 
+            {/* Live inventory search bar */}
             <VehicleSearch onSearch={handleSearch} />
 
+            {/* Vehicle list container */}
             <div className="flex flex-col gap-4">
+                {/* Empty state prompt */}
                 {vehicles.length === 0 && !loading && (
                     <div className="rounded-xl border border-dashed border-slate-300 py-12 text-center text-slate-500">
                         No vehicles found matching your criteria.
                     </div>
                 )}
+                {/* Render individual vehicle record cards */}
                 {vehicles.map((v) => (
                     <VehicleCard
                         key={v.id}
@@ -165,6 +190,7 @@ const Admin: React.FC<AdminProps> = ({ token, navigate }) => {
     );
 };
 
+// Props definition for the VehicleForm component
 interface VehicleFormProps {
     editingId: number | null;
     formData: VehicleFormData;
@@ -172,6 +198,7 @@ interface VehicleFormProps {
     onSubmit: (e: React.FormEvent) => void;
 }
 
+// Sub-component rendering input controls for vehicle management
 const VehicleForm: React.FC<VehicleFormProps> = ({ editingId, formData, onChange, onSubmit }) => (
     <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="mb-5 text-lg font-semibold text-slate-800">
@@ -202,6 +229,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ editingId, formData, onChange
     </div>
 );
 
+// Props definition for the VehicleCard component
 interface VehicleCardProps {
     vehicle: Vehicle;
     onEdit: (vehicle: Vehicle) => void;
@@ -209,9 +237,12 @@ interface VehicleCardProps {
     onRestock: (id: number, amount: number) => void;
 }
 
+// Sub-component displaying individual vehicle details and action controls
 const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onEdit, onDelete, onRestock }) => {
+    // Local state for tracking restock input field value
     const [restockAmount, setRestockAmount] = useState<string>('');
 
+    // Validates restock quantity input before dispatching submit action
     const handleRestockSubmit = () => {
         const amount = Number(restockAmount);
         if (isNaN(amount) || amount <= 0) return;
@@ -221,6 +252,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onEdit, onDelete, on
 
     return (
         <div className="group flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+            {/* Vehicle basic information display */}
             <div className="flex min-w-0 flex-col">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <h3 className="truncate text-lg font-bold text-slate-900">{vehicle.make} {vehicle.model}</h3>
@@ -233,6 +265,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onEdit, onDelete, on
                 </div>
             </div>
 
+            {/* Vehicle action controls (restock, edit, delete) */}
             <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center">
                     <input type="number" placeholder="Qty" value={restockAmount} onChange={(e) => setRestockAmount(e.target.value)} className="h-9 w-20 rounded-l-lg border border-slate-300 bg-slate-50 px-3 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />

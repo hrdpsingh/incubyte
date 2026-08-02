@@ -5,8 +5,10 @@ import { vi, test, expect } from "vitest";
 import Login from "./Login";
 
 test("logs in successfully", async () => {
+    // Standardize user event engine before rendering component
     const user = userEvent.setup();
 
+    // Mock successful authentication API response
     vi.stubGlobal(
         "fetch",
         vi.fn(() =>
@@ -20,6 +22,7 @@ test("logs in successfully", async () => {
         )
     );
 
+    // Spy on navigation and state setter callbacks passed as props
     const setToken = vi.fn();
     const navigate = vi.fn();
     const setIsAdmin = vi.fn();
@@ -32,6 +35,7 @@ test("logs in successfully", async () => {
         />
     );
 
+    // Simulate complete user authentication flow
     await user.type(
         screen.getByPlaceholderText(
             "Username"
@@ -52,6 +56,7 @@ test("logs in successfully", async () => {
         })
     );
 
+    // Verify network request was dispatched and authentication state was persisted
     expect(fetch).toHaveBeenCalled();
 
     expect(setToken).toHaveBeenCalledWith(

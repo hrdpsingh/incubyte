@@ -13,6 +13,7 @@ interface FormState {
     isLoading: boolean;
 }
 
+// Immutable default state to ensure clean resets across render cycles
 const INITIAL_STATE: FormState = {
     error: "",
     success: "",
@@ -23,6 +24,7 @@ export default function Register({ navigate }: RegisterProps) {
     const [formState, setFormState] = useState<FormState>(INITIAL_STATE);
 
     async function handleSubmit(username: string, password: string) {
+        // Clear prior status banners and block duplicate submissions
         setFormState({ error: "", success: "", isLoading: true });
 
         try {
@@ -33,14 +35,18 @@ export default function Register({ navigate }: RegisterProps) {
             });
 
             if (!response.ok) {
+                // Fallback message ensures UI feedback even if the backend payload lacks an error field
                 const errorMessage = await extractError(response, "Registration failed.");
                 setFormState({ error: errorMessage, success: "", isLoading: false });
                 return;
             }
 
             setFormState({ error: "", success: "Registration successful!", isLoading: false });
+
+            // Redirect immediately to credentials check after provisioning
             navigate("login");
         } catch {
+            // Catches network dropouts or CORS errors before a response is received
             setFormState({ error: "Unable to contact server.", success: "", isLoading: false });
         }
     }

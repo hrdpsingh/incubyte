@@ -1,5 +1,6 @@
 import type { Vehicle } from "../types";
 
+// Displays vehicle details and handles purchase actions with reactive inventory states.
 export default function VehicleCard({
   vehicle,
   onPurchase,
@@ -7,30 +8,34 @@ export default function VehicleCard({
   vehicle: Vehicle;
   onPurchase: (id: number) => void;
 }) {
+  // Primary inventory gate controlling UX state and action availability.
   const isOutOfStock = vehicle.quantity === 0;
 
   return (
+    // Card container with subtle hover interactions and flex layout for uniform height.
     <div className="group flex h-full flex-col justify-between overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 transition-all hover:-translate-y-1 hover:shadow-lg hover:ring-blue-500/30">
       <div className="p-4 sm:p-5">
+        {/* Header metadata: Category badge and dynamic availability indicator */}
         <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
           <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
             {vehicle.category}
           </span>
           <span
-            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-              isOutOfStock
+            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${isOutOfStock
                 ? "bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/10"
                 : "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
-            }`}
+              }`}
           >
             {isOutOfStock ? "Out of Stock" : `${vehicle.quantity} Available`}
           </span>
         </div>
 
+        {/* Truncated title prevents layout shifts on longer vehicle names */}
         <h2 className="truncate text-lg font-bold text-slate-900 transition-colors group-hover:text-blue-600 sm:text-xl">
           {vehicle.make} {vehicle.model}
         </h2>
 
+        {/* Formatted price display adhering to regional currency conventions */}
         <div className="mt-4 flex items-baseline">
           <span className="text-2xl font-black text-slate-900">
             ${vehicle.price.toLocaleString()}
@@ -38,6 +43,7 @@ export default function VehicleCard({
         </div>
       </div>
 
+      {/* Primary CTA pinned to bottom via flex layout */}
       <div className="p-4 pt-0 sm:p-5 sm:pt-0">
         <button
           disabled={isOutOfStock}

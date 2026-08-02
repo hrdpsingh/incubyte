@@ -3,17 +3,20 @@ import type { Screen } from "../types";
 import { API } from "../utilities";
 import AuthForm from "../Components/Authentication";
 
+// Props contract required to manage top-level app auth state and routing.
 interface LoginProps {
     setToken: (token: string) => void;
     setIsAdmin: (isAdmin: boolean) => void;
     navigate: (screen: Screen) => void;
 }
 
+// Mirror expected payload from POST /api/authentication/login endpoint.
 interface LoginResponse {
     access_token: string;
     is_admin?: boolean;
 }
 
+// Encapsulates network request to allow isolation or future extraction to an API service module.
 async function loginUser(username: string, password: string): Promise<LoginResponse> {
     const response = await fetch(`${API}/api/authentication/login`, {
         method: "POST",
@@ -21,6 +24,7 @@ async function loginUser(username: string, password: string): Promise<LoginRespo
         body: JSON.stringify({ username, password }),
     });
 
+    // Uniformly flag non-2xx responses as generic credential failures for the UI layer.
     if (!response.ok) {
         throw new Error("Invalid credentials");
     }
@@ -40,9 +44,10 @@ export default function Login({ setToken, setIsAdmin, navigate }: LoginProps) {
             const data = await loginUser(username, password);
             setToken(data.access_token);
             setIsAdmin(Boolean(data.is_admin));
-        } catch (err) {
-            const message = err instanceof Error && err.message === "Invalid credentials"
-                ? err.message
+        } catch (error) {
+            // Distinguish expected authentication errors from network connection failures.
+            const message = error instanceof Error && error.message === "Invalid credentials"
+                ? error.message
                 : "Unable to contact server.";
             setError(message);
         } finally {

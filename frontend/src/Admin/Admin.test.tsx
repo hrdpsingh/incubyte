@@ -3,6 +3,7 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Admin from "./Admin";
 
+// Test fixture data
 const vehicles = [
     {
         id: 1,
@@ -16,6 +17,7 @@ const vehicles = [
 
 const mockNavigate = vi.fn();
 
+// Mock response builder for global fetch
 function mockFetch(response: any, ok = true) {
     globalThis.fetch = vi.fn().mockResolvedValue({
         ok,
@@ -32,6 +34,7 @@ describe("Admin", () => {
         mockFetch(vehicles);
         render(<Admin token="token" navigate={mockNavigate} />);
 
+        // Verify initial render and data fetch
         expect(screen.getByText(/loading/i)).toBeInTheDocument();
         expect(await screen.findByText(/Toyota Camry/)).toBeInTheDocument();
 
@@ -51,6 +54,7 @@ describe("Admin", () => {
 
         await screen.findByText(/Toyota Camry/);
 
+        // Test navigation callback
         await userEvent.click(
             screen.getByRole("button", { name: /back to inventory/i })
         );
@@ -59,6 +63,7 @@ describe("Admin", () => {
     });
 
     it("adds a vehicle", async () => {
+        // Mock fetch sequence: initial load, POST creation, refreshed list
         globalThis.fetch = vi
             .fn()
             .mockResolvedValueOnce({ ok: true, json: async () => [] })
@@ -71,6 +76,7 @@ describe("Admin", () => {
             expect(screen.getByPlaceholderText("Make")).toBeInTheDocument()
         );
 
+        // Fill out and submit vehicle creation form
         await userEvent.type(screen.getByPlaceholderText("Make"), "Toyota");
         await userEvent.type(screen.getByPlaceholderText("Model"), "Camry");
         await userEvent.type(screen.getByPlaceholderText("Category"), "Sedan");
@@ -95,6 +101,7 @@ describe("Admin", () => {
     });
 
     it("deletes a vehicle", async () => {
+        // Mock fetch sequence: initial load, DELETE request, refreshed list
         globalThis.fetch = vi
             .fn()
             .mockResolvedValueOnce({ ok: true, json: async () => vehicles })
@@ -119,12 +126,14 @@ describe("Admin", () => {
         await screen.findByText(/Toyota Camry/);
         await userEvent.click(screen.getByRole("button", { name: /edit/i }));
 
+        // Verify edit form population
         expect(screen.getByDisplayValue("Toyota")).toBeInTheDocument();
         expect(screen.getByDisplayValue("Camry")).toBeInTheDocument();
         expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     });
 
     it("restocks a vehicle", async () => {
+        // Mock fetch sequence: initial load, POST restock, refreshed list
         globalThis.fetch = vi
             .fn()
             .mockResolvedValueOnce({ ok: true, json: async () => vehicles })
@@ -135,6 +144,7 @@ describe("Admin", () => {
 
         await screen.findByText(/Toyota Camry/);
 
+        // Submit restock payload
         const qtyInput = screen.getByPlaceholderText("Qty");
         await userEvent.type(qtyInput, "4");
 
@@ -150,6 +160,7 @@ describe("Admin", () => {
     });
 
     it("searches vehicles", async () => {
+        // Mock fetch sequence: initial empty state, search result list
         globalThis.fetch = vi
             .fn()
             .mockResolvedValueOnce({ ok: true, json: async () => [] })
@@ -161,6 +172,7 @@ describe("Admin", () => {
             expect(screen.getByPlaceholderText(/search make, model, or category/i)).toBeInTheDocument()
         );
 
+        // Submit search query
         await userEvent.type(
             screen.getByPlaceholderText(/search make, model, or category/i),
             "Toyota Camry"
@@ -179,6 +191,7 @@ describe("Admin", () => {
     });
 
     it("shows API errors", async () => {
+        // Mock API error response
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: false,
             json: async () => ({

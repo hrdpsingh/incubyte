@@ -5,6 +5,7 @@ interface VehicleSearchProps {
     onSearch: (params: SearchParams) => void;
 }
 
+// Global price range boundaries for normalized scaling calculations
 const ABSOLUTE_MIN = 0;
 const ABSOLUTE_MAX = 200000;
 const STEP = 1000;
@@ -12,11 +13,11 @@ const STEP = 1000;
 export default function VehicleSearch({ onSearch }: VehicleSearchProps) {
     const [query, setQuery] = useState("");
 
-    // Store exact thumb physical values independently
+    // Raw slider values kept order-agnostic to prevent crossover locking
     const [val1, setVal1] = useState(ABSOLUTE_MIN);
     const [val2, setVal2] = useState(ABSOLUTE_MAX);
 
-    // Derive semantic min/max on the fly to eliminate jittering and bounds fighting
+    // Derived bounds ensure correct min/max values regardless of handle positions
     const minPrice = Math.min(val1, val2);
     const maxPrice = Math.max(val1, val2);
 
@@ -24,6 +25,7 @@ export default function VehicleSearch({ onSearch }: VehicleSearchProps) {
         if (e) e.preventDefault();
         onSearch({
             query,
+            // Convert boundary values to empty strings to avoid unnecessary API query params
             minPrice: minPrice > ABSOLUTE_MIN ? String(minPrice) : "",
             maxPrice: maxPrice < ABSOLUTE_MAX ? String(maxPrice) : "",
         });
@@ -32,9 +34,11 @@ export default function VehicleSearch({ onSearch }: VehicleSearchProps) {
     const formatPrice = (value: number) =>
         value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
+    // Percentage translations used for dual-thumb slider track positioning
     const minPct = ((minPrice - ABSOLUTE_MIN) / (ABSOLUTE_MAX - ABSOLUTE_MIN)) * 100;
     const maxPct = ((maxPrice - ABSOLUTE_MIN) / (ABSOLUTE_MAX - ABSOLUTE_MIN)) * 100;
 
+    // Shared input styling across form controls
     const inputClasses =
         "w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 placeholder:text-slate-400";
 
@@ -45,6 +49,7 @@ export default function VehicleSearch({ onSearch }: VehicleSearchProps) {
                 <div className="lg:col-span-2">
                     <label className="mb-1 block text-xs font-medium text-slate-700">Search</label>
                     <div className="relative">
+                        {/* Decorative search icon absolute-positioned over padded text input */}
                         <svg
                             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
                             fill="none"
@@ -72,15 +77,16 @@ export default function VehicleSearch({ onSearch }: VehicleSearchProps) {
                     <div className="mb-2 flex items-center justify-between gap-2">
                         <label className="text-xs font-medium text-slate-700">Price Range</label>
                         <span className="text-xs font-medium text-slate-500">
+                            {/* Appends '+' to indicate open-ended upper boundary */}
                             {formatPrice(minPrice)} – {maxPrice >= ABSOLUTE_MAX ? `${formatPrice(ABSOLUTE_MAX)}+` : formatPrice(maxPrice)}
                         </span>
                     </div>
-                    {/* Replaced 'px-1' with absolute left-0 positioning to ensure accurate pixel perfect alignments without thumb offset clipping */}
+
                     <div className="relative flex h-7 w-full items-center">
-                        {/* Background Track */}
+                        {/* Inactive track background */}
                         <div className="absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-slate-200" />
 
-                        {/* Active range (Corrected mathematical precision accounting exactly for 20px thumb widths) */}
+                        {/* Highlighted active region dynamically scaled with thumb offset corrections */}
                         <div
                             className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-blue-500"
                             style={{
@@ -88,6 +94,7 @@ export default function VehicleSearch({ onSearch }: VehicleSearchProps) {
                                 width: `calc(${maxPct - minPct}% - ${(maxPct - minPct) * 0.2}px)`
                             }}
                         />
+                        {/* Overlaid native range inputs with pointer-events deferred to thumbs via CSS */}
                         <input
                             type="range"
                             min={ABSOLUTE_MIN}
@@ -139,6 +146,7 @@ export default function VehicleSearch({ onSearch }: VehicleSearchProps) {
                 </div>
             </form>
 
+            {/* Custom pseudo-element resets to enable dual-range thumb interactivity over transparent tracks */}
             <style>{`
                 .range-thumb {
                     height: 20px;

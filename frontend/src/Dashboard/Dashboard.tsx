@@ -20,12 +20,17 @@ export default function Dashboard({
     logout,
     navigate,
 }: DashboardProps) {
+    // Memoize header creation to prevent unnecessary custom hook re-runs on parent renders
     const authHeaders = useCallback(
         () => ({ Authorization: `Bearer ${token}` }),
         [token]
     );
 
-    const { vehicles, error, setError, handleSearch, refetch } = useVehicles(authHeaders);
+    // Primary state machine and data fetcher managed by custom hook
+    const { vehicles, error, setError, handleSearch, refetch } = useVehicles(
+        authHeaders,
+        logout
+    );
 
     const handlePurchase = async (id: number) => {
         setError("");
@@ -35,12 +40,19 @@ export default function Dashboard({
                 headers: authHeaders(),
             });
 
+            if (response.status === 401) {
+                logout();
+                return;
+            }
+
             if (!response.ok) {
+                // Fall back to localized fallback text if backend error extraction yields empty result
                 throw new Error(
                     await extractError(response, "Vehicle is unavailable")
                 );
             }
 
+            // Sync UI state with inventory server after mutating record
             await refetch();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Something went wrong");
@@ -57,6 +69,7 @@ export default function Dashboard({
 
             <VehicleSearch onSearch={handleSearch} />
 
+            {/* Render priority: Error state > Empty state > Data grid */}
             {error ? (
                 <ErrorAlert message={error} />
             ) : vehicles.length === 0 ? (
@@ -68,6 +81,7 @@ export default function Dashboard({
     );
 }
 
+// Global action banner and role-based privilege navigation
 function Header({ isAdmin, onLogout, onNavigateAdmin }: { isAdmin: boolean; onLogout: () => void; onNavigateAdmin: () => void }) {
     return (
         <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
@@ -80,6 +94,7 @@ function Header({ isAdmin, onLogout, onNavigateAdmin }: { isAdmin: boolean; onLo
                 </p>
             </div>
             <div className="flex gap-3">
+                {/* Gate administrative views to privileged users */}
                 {isAdmin && (
                     <button
                         onClick={onNavigateAdmin}
@@ -99,6 +114,7 @@ function Header({ isAdmin, onLogout, onNavigateAdmin }: { isAdmin: boolean; onLo
     );
 }
 
+// Displayed when queries yield zero records or stock is depleted
 function EmptyState() {
     return (
         <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 px-4 py-16 text-center sm:mt-12">
@@ -111,6 +127,7 @@ function EmptyState() {
     );
 }
 
+// Responsive grid wrapper scaling from 1 to 4 columns based on view width
 function VehicleGrid({ vehicles, onPurchase }: { vehicles: Vehicle[]; onPurchase: (id: number) => void }) {
     return (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">

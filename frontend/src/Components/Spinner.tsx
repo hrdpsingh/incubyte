@@ -1,9 +1,11 @@
+// Configuration for caller-driven visual styling and sizing dimensions.
 interface SpinnerProps {
     className?: string;
     size?: "sm" | "md" | "lg";
 }
 
 export default function Spinner({ className = "", size = "sm" }: SpinnerProps) {
+    // Maps semantic size tokens to explicit Tailwind dimensional utilities.
     const sizeClasses = {
         sm: "w-4 h-4",
         md: "w-6 h-6",
@@ -16,8 +18,10 @@ export default function Spinner({ className = "", size = "sm" }: SpinnerProps) {
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
+            /* Hides decorative visual element from screen readers; pair with aria-live parent containers. */
             aria-hidden="true"
         >
+            {/* Background track indicator */}
             <circle
                 className="opacity-25"
                 cx="12"
@@ -26,6 +30,7 @@ export default function Spinner({ className = "", size = "sm" }: SpinnerProps) {
                 stroke="currentColor"
                 strokeWidth="4"
             />
+            {/* Active spinning segment covering a 90-degree arc */}
             <path
                 className="opacity-75"
                 fill="currentColor"

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Spinner from "./Spinner";
 
+// Configuration for reusable auth flows (e.g., login, registration)
 interface AuthFormProps {
     title: string;
     subtitle?: string;
@@ -28,10 +29,12 @@ export default function AuthForm({
     onSwitch,
     onSubmit,
 }: AuthFormProps) {
+    // Form input state management
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
-    const handleSubmit = (e: React.FormEvent) => {
+    // Delegate values to parent handler while suppressing native submission
+    const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         onSubmit(username, password);
     };
@@ -39,6 +42,7 @@ export default function AuthForm({
     return (
         <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
             <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl shadow-slate-200/50 ring-1 ring-slate-100">
+                {/* Header Section */}
                 <div className="mb-8 text-center">
                     <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
                         <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -50,6 +54,7 @@ export default function AuthForm({
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
+                    {/* Feedback Messages */}
                     {error && (
                         <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 border border-red-100">
                             {error}
@@ -61,8 +66,10 @@ export default function AuthForm({
                         </div>
                     )}
 
+                    {/* Credentials Input Fields */}
                     <div className="space-y-4">
                         <div>
+                            {/* Screen-reader label for accessible floating-style inputs */}
                             <label className="sr-only" htmlFor="username">Username</label>
                             <input
                                 id="username"
@@ -98,6 +105,7 @@ export default function AuthForm({
                     </button>
                 </form>
 
+                {/* Flow Switcher Footer */}
                 <div className="mt-8 border-t border-slate-100 pt-6 text-center">
                     <p className="text-sm text-slate-600">
                         {switchText}{" "}
