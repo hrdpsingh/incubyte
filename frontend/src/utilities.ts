@@ -10,9 +10,9 @@ export function buildVehicleSearchUrl(params?: SearchParams): string {
         const sp = new URLSearchParams();
 
         // Append optional filter criteria to query parameters.
-        if (params.query) sp.append("q", params.query);
-        if (params.minPrice) sp.append("min_price", params.minPrice);
-        if (params.maxPrice) sp.append("max_price", params.maxPrice);
+        if (params.query) sp.append("query", params.query);
+        if (params.minPrice) sp.append("minimum_price", params.minPrice);
+        if (params.maxPrice) sp.append("maximum_price", params.maxPrice);
 
         if (sp.toString()) {
             url = `${API}/api/vehicles/search?${sp.toString()}`;
