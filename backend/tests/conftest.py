@@ -1,5 +1,6 @@
 import pytest
 from database import get_session
+from fastapi import status
 from fastapi.testclient import TestClient
 from main import app
 from model import User
@@ -96,7 +97,7 @@ def create_vehicle(client):
         """Send a request to create a vehicle with specified quantity and return the JSON response."""
         payload = {**VEHICLE_DATA, "quantity": quantity}
         response = client.post("/api/vehicles", headers=headers, json=payload)
-        assert response.status_code == 201
+        assert response.status_code == status.HTTP_201_CREATED
         return response.json()
 
     return create

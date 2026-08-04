@@ -11,7 +11,7 @@ from utilities.seed import create_admin
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_: FastAPI):
     """Manage application startup tasks such as database initialization and admin seeding."""
     SQLModel.metadata.create_all(bind=engine)
     create_admin()

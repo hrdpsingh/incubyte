@@ -156,18 +156,12 @@ class TestUserOperations:
     def test_purchase_vehicle_unauthorized(self, client):
         """Test purchasing a vehicle without authentication headers fails."""
         response = client.post(f"{VEHICLE_URL}/1/purchase")
-        assert response.status_code in (
-            status.HTTP_401_UNAUTHORIZED,
-            status.HTTP_403_FORBIDDEN,
-        )
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_restock_vehicle_unauthorized(self, client):
         """Test restocking a vehicle without authentication headers fails."""
         response = client.post(f"{VEHICLE_URL}/1/restock", json=RESTOCK_VEHICLE)
-        assert response.status_code in (
-            status.HTTP_401_UNAUTHORIZED,
-            status.HTTP_403_FORBIDDEN,
-        )
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_create_vehicle_forbidden(self, client, authentication_headers):
         """Test standard users are forbidden from creating vehicles."""
